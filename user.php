@@ -22,7 +22,7 @@ try {
         sendResponse(false, '未登录或登录已过期');
     }
     
-    $stmt = $pdo->prepare('SELECT id, email, nickname, avatar FROM users WHERE token = ?');
+    $stmt = $pdo->prepare('SELECT id, email, nickname, avatar, verified FROM users WHERE token = ?');
     $stmt->execute([$token]);
     $user = $stmt->fetch();
     
@@ -33,7 +33,8 @@ try {
     $userData = [
         'email' => $user['email'],
         'nickname' => $user['nickname'],
-        'avatar' => $user['avatar'] ?? null
+        'avatar' => $user['avatar'] ?? null,
+        'is_verified' => (bool)$user['verified']
     ];
     
     sendResponse(true, '获取用户信息成功', $userData);
