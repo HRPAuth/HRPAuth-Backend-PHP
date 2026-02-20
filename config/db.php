@@ -1,6 +1,4 @@
 <?php
-// Database configuration and helper to get a PDO instance.
-// Configure via environment variables (recommended) or edit defaults below.
 $DB = [
     'host' => getenv('DB_HOST') ?: '127.0.0.1',
     'dbname' => getenv('DB_NAME') ?: 'hademo',
@@ -22,9 +20,7 @@ function getPDO()
     try {
         return new PDO($dsn, $DB['user'], $DB['pass'], $opts);
     } catch (PDOException $e) {
-        // Provide a concise, actionable error message
-        $msg = 'Database connection failed. Check DB_HOST/DB_NAME/DB_USER/DB_PASS in environment or edit config.php.';
-        // Log detailed error if error_log is available, then rethrow a generic message
+        $msg = 'Database connection failed. Check DB_HOST/DB_NAME/DB_USER/DB_PASS in environment or edit config/db.php.';
         error_log('PDO connection error: ' . $e->getMessage());
         throw new PDOException($msg, (int)$e->getCode());
     }

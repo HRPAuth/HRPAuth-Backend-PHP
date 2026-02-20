@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/config/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -12,7 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 支持 application/json
 $input = json_decode(file_get_contents('php://input'), true);
 
 $email     = trim($input['email'] ?? '');
@@ -20,7 +19,6 @@ $nickname  = trim($input['nickname'] ?? '');
 $password  = $input['password'] ?? '';
 $password2 = $input['password2'] ?? '';
 
-// 基础验证
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Invalid email']);
@@ -69,7 +67,7 @@ $ip   = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 $now  = date('Y-m-d H:i:s');
 $score = 1000;
 $verification_token = bin2hex(random_bytes(16));
-$verified = 1;
+$verified = 0;
 
 $insert = $pdo->prepare(
     'INSERT INTO users 

@@ -2,7 +2,7 @@
 header('Content-Type: application/json; charset=utf-8');
 session_start();
 
-require_once 'config.php';
+require_once 'config/db.php';
 
 function sendResponse($success, $message, $data = null) {
     echo json_encode([

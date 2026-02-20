@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/config/db.php';
 
 // Start session and attempt to remove server-side remember token if present
 if (session_status() === PHP_SESSION_NONE) {
