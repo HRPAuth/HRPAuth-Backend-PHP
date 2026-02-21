@@ -1,0 +1,322 @@
+{
+  // hrpa.database.jsonc — 完整补全版
+  "database": "hrpa",
+
+  "tables": {
+    "users": {
+      "columns": {
+        "uid": "INT PRIMARY KEY AUTO_INCREMENT",
+        "email": "VARCHAR(255)",
+        "nickname": "VARCHAR(100)",
+        "locale": "VARCHAR(10) NULL",
+        "score": "INT DEFAULT 0",
+        "avatar": "VARCHAR(255) NULL",
+        "password": "VARCHAR(255)",
+        "ip": "VARCHAR(45) NULL",
+        "is_dark_mode": "TINYINT(1) DEFAULT 0",
+        "permission": "INT DEFAULT 0",
+        "last_sign_at": "DATETIME NULL",
+        "register_at": "DATETIME NULL",
+        "verified": "TINYINT(1) DEFAULT 0",
+        "verification_token": "VARCHAR(255) NULL",
+        "remember_token": "VARCHAR(255) NULL",
+        "username": "VARCHAR(100)",
+        "realname": "VARCHAR(100) NULL",
+        "lastlogin": "BIGINT NULL",
+        "x": "DOUBLE NULL",
+        "y": "DOUBLE NULL",
+        "z": "DOUBLE NULL",
+        "world": "VARCHAR(100) NULL",
+        "regdate": "BIGINT NULL",
+        "regip": "VARCHAR(45) NULL",
+        "yaw": "FLOAT NULL",
+        "pitch": "FLOAT NULL",
+        "isLogged": "TINYINT(1) DEFAULT 0",
+        "hasSession": "TINYINT(1) DEFAULT 0",
+        "totp": "VARCHAR(255) NULL"
+      },
+      "primaryKey": "uid",
+      "notes": "regdate 与 lastlogin 为毫秒时间戳；password 建议存 bcrypt 哈希。"
+    },
+
+    "uuid": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "pid": "INT NULL",
+        "name": "VARCHAR(191) NULL",
+        "uuid": "CHAR(36) NOT NULL",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL"
+      },
+      "primaryKey": "id",
+      "indexes": ["uuid", "pid"]
+    },
+
+    "code_id_to_uuid": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "code_id": "VARCHAR(100) NOT NULL",
+        "uuid": "CHAR(36) NOT NULL",
+        "created_at": "DATETIME NULL"
+      },
+      "notes": "短码或一次性授权映射。"
+    },
+
+    "jobs": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "queue": "VARCHAR(255)",
+        "payload": "LONGTEXT",
+        "attempts": "INT DEFAULT 0",
+        "reserved_at": "INT NULL",
+        "available_at": "INT NULL",
+        "created_at": "DATETIME NULL"
+      },
+      "notes": "典型队列任务表（Laravel 风格）。"
+    },
+
+    "language_lines": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "group": "VARCHAR(100)",
+        "key": "VARCHAR(191)",
+        "text": "TEXT",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL"
+      },
+      "notes": "多语言/本地化字符串存储。"
+    },
+
+    "luckperms_actions": {
+      "columns": {
+        "id": "BIGINT PRIMARY KEY",
+        "time": "BIGINT",
+        "actor_uuid": "CHAR(36) NULL",
+        "actor_name": "VARCHAR(191) NULL",
+        "type": "VARCHAR(10) NULL",
+        "acted_uuid": "CHAR(36) NULL",
+        "acted_name": "VARCHAR(191) NULL",
+        "action": "TEXT"
+      },
+      "notes": "权限操作审计日志。"
+    },
+
+    "luckperms_groups": {
+      "columns": {
+        "name": "VARCHAR(191) PRIMARY KEY",
+        "data": "LONGTEXT NULL"
+      },
+      "notes": "组定义，截图显示至少包含 name 字段（例如 default）。"
+    },
+
+    "luckperms_group_permissions": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "name": "VARCHAR(191)",
+        "permission": "VARCHAR(255)",
+        "value": "TINYINT(1) DEFAULT 1",
+        "server": "VARCHAR(100) DEFAULT 'global'",
+        "world": "VARCHAR(100) DEFAULT 'global'",
+        "expiry": "BIGINT DEFAULT 0",
+        "contexts": "TEXT DEFAULT '{}'"
+      },
+      "notes": "权限条目，contexts 存 JSON。"
+    },
+
+    "luckperms_messenger": {
+      "columns": {
+        "id": "BIGINT PRIMARY KEY",
+        "time": "BIGINT",
+        "msg": "TEXT"
+      }
+    },
+
+    "luckperms_players": {
+      "columns": {
+        "uuid": "CHAR(36) PRIMARY KEY",
+        "username": "VARCHAR(191)",
+        "primary_group": "VARCHAR(191) NULL"
+      }
+    },
+
+    "luckperms_tracks": {
+      "columns": {
+        "name": "VARCHAR(191) PRIMARY KEY",
+        "groups": "TEXT"
+      },
+      "notes": "groups 可能为 JSON 数组或逗号分隔字符串。"
+    },
+
+    "luckperms_user_permissions": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "uuid": "CHAR(36)",
+        "permission": "VARCHAR(255)",
+        "value": "TINYINT(1) DEFAULT 1",
+        "server": "VARCHAR(100) DEFAULT 'global'",
+        "world": "VARCHAR(100) DEFAULT 'global'",
+        "expiry": "BIGINT DEFAULT 0",
+        "contexts": "TEXT DEFAULT '{}'"
+      }
+    },
+
+    "migrations": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "migration": "VARCHAR(255)",
+        "batch": "INT"
+      }
+    },
+
+    "notifications": {
+      "columns": {
+        "id": "CHAR(36) PRIMARY KEY",
+        "type": "VARCHAR(255)",
+        "notifiable_type": "VARCHAR(255)",
+        "notifiable_id": "VARCHAR(191)",
+        "data": "LONGTEXT",
+        "read_at": "DATETIME NULL",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL"
+      }
+    },
+
+    "oauth_access_tokens": {
+      "columns": {
+        "id": "CHAR(100) PRIMARY KEY",
+        "user_id": "INT NULL",
+        "client_id": "INT",
+        "name": "VARCHAR(255) NULL",
+        "scopes": "TEXT NULL",
+        "revoked": "TINYINT(1) DEFAULT 0",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL",
+        "expires_at": "DATETIME NULL"
+      }
+    },
+
+    "oauth_auth_codes": {
+      "columns": {
+        "id": "CHAR(100) PRIMARY KEY",
+        "user_id": "INT NULL",
+        "client_id": "INT",
+        "scopes": "TEXT NULL",
+        "revoked": "TINYINT(1) DEFAULT 0",
+        "expires_at": "DATETIME NULL"
+      }
+    },
+
+    "oauth_clients": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "user_id": "INT NULL",
+        "name": "VARCHAR(255)",
+        "secret": "VARCHAR(100) NULL",
+        "provider": "VARCHAR(100) NULL",
+        "redirect": "TEXT",
+        "personal_access_client": "TINYINT(1) DEFAULT 0",
+        "password_client": "TINYINT(1) DEFAULT 0",
+        "revoked": "TINYINT(1) DEFAULT 0",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL"
+      }
+    },
+
+    "oauth_personal_access_clients": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "client_id": "INT",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL"
+      }
+    },
+
+    "oauth_refresh_tokens": {
+      "columns": {
+        "id": "CHAR(100) PRIMARY KEY",
+        "access_token_id": "CHAR(100)",
+        "revoked": "TINYINT(1) DEFAULT 0",
+        "expires_at": "DATETIME NULL"
+      }
+    },
+
+    "options": {
+      "columns": {
+        "key": "VARCHAR(191) PRIMARY KEY",
+        "value": "TEXT NULL",
+        "autoload": "TINYINT(1) DEFAULT 1"
+      }
+    },
+
+    "players": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "uuid": "CHAR(36) NULL",
+        "name": "VARCHAR(191)",
+        "data": "LONGTEXT NULL",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL"
+      }
+    },
+
+    "reports": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "tid": "INT NULL",
+        "uploader": "INT NULL",
+        "reporter": "INT NULL",
+        "reason": "TEXT",
+        "status": "VARCHAR(50) DEFAULT 'open'",
+        "report_at": "DATETIME NULL"
+      }
+    },
+
+    "scopes": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "name": "VARCHAR(100)",
+        "description": "TEXT NULL"
+      }
+    },
+
+    "textures": {
+      "columns": {
+        "tid": "INT PRIMARY KEY AUTO_INCREMENT",
+        "name": "VARCHAR(255)",
+        "type": "VARCHAR(50)",
+        "hash": "VARCHAR(255)",
+        "size": "INT",
+        "uploader": "INT",
+        "public": "TINYINT(1) DEFAULT 0",
+        "upload_at": "DATETIME NULL",
+        "likes": "INT DEFAULT 0"
+      }
+    },
+
+    "user_closet": {
+      "columns": {
+        "id": "INT PRIMARY KEY AUTO_INCREMENT",
+        "user_uid": "INT",
+        "texture_tid": "INT",
+        "item_name": "VARCHAR(255)",
+        "created_at": "DATETIME NULL",
+        "updated_at": "DATETIME NULL"
+      },
+      "notes": "截图示例显示 user_uid, texture_tid, item_name。"
+    },
+
+    "ygg_log": {
+      "columns": {
+        "id": "BIGINT PRIMARY KEY AUTO_INCREMENT",
+        "action": "VARCHAR(191)",
+        "user_id": "INT NULL",
+        "player_id": "INT NULL",
+        "parameters": "LONGTEXT NULL",
+        "ip": "VARCHAR(45) NULL",
+        "time": "DATETIME NULL"
+      },
+      "notes": "应用级日志，parameters 可存 JSON。"
+    }
+
+  } // end tables
+}

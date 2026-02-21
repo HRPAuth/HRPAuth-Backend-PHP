@@ -1,0 +1,448 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Yggdrasil Server Complete Spec",
+  "description": "完整的 Yggdrasil 服务端技术规范的单一 JSON Schema 文件，包含主要数据模型、常用 API 请求/响应结构与错误格式。基于提供的 GitHub Wiki 内容抽象而成，便于校验、生成示例与喂给 code agent。",
+  "type": "object",
+  "properties": {
+    "models": {
+      "$ref": "#/definitions/Models"
+    },
+    "endpoints": {
+      "$ref": "#/definitions/Endpoints"
+    },
+    "meta": {
+      "$ref": "#/definitions/API_Meta"
+    },
+    "errors": {
+      "$ref": "#/definitions/ErrorResponse"
+    }
+  },
+  "required": ["models","endpoints"],
+  "additionalProperties": false,
+  "definitions": {
+    "Models": {
+      "type": "object",
+      "properties": {
+        "User": { "$ref": "#/definitions/User" },
+        "Property": { "$ref": "#/definitions/Property" },
+        "Profile": { "$ref": "#/definitions/Profile" },
+        "TexturesPayload": { "$ref": "#/definitions/TexturesPayload" },
+        "Token": { "$ref": "#/definitions/Token" }
+      },
+      "required": ["User","Profile","Token"]
+    },
+    "User": {
+      "type": "object",
+      "description": "用户模型。ID 为无符号 UUID（去掉 '-' 的字符串）。邮箱唯一，可变更。",
+      "required": ["id","email"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "无符号 UUID（去掉 '-'）"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "description": "密码哈希（实现应存储哈希而非明文）"
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Property" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Property": {
+      "type": "object",
+      "required": ["name","value"],
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" },
+        "signature": {
+          "type": "string",
+          "description": "Base64 编码的数字签名（SHA1withRSA），仅在需要时包含"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Profile": {
+      "type": "object",
+      "description": "角色（Profile）模型。UUID 与 name 必须存在。",
+      "required": ["id","name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "角色 UUID（无符号）"
+        },
+        "name": { "type": "string" },
+        "model": {
+          "type": "string",
+          "enum": ["default","slim"],
+          "description": "材质模型，default 或 slim"
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Property" },
+          "description": "角色属性数组（textures 等），通常可选"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TexturesPayload": {
+      "type": "object",
+      "description": "textures 属性的解码后 JSON 结构（在角色属性中以 Base64 存储）",
+      "required": ["timestamp","profileId","profileName","textures"],
+      "properties": {
+        "timestamp": { "type": "integer", "description": "Java 毫秒时间戳" },
+        "profileId": { "type": "string" },
+        "profileName": { "type": "string" },
+        "textures": {
+          "type": "object",
+          "description": "按材质类型（如 SKIN、CAPE）映射到对象",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["url"],
+            "properties": {
+              "url": { "type": "string", "format": "uri" },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "model": { "type": "string", "enum": ["default","slim"] }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Token": {
+      "type": "object",
+      "description": "令牌模型，accessToken 由服务端生成，clientToken 由客户端提供或服务端生成。",
+      "required": ["accessToken","clientToken","issuedAt"],
+      "properties": {
+        "accessToken": { "type": "string" },
+        "clientToken": { "type": "string" },
+        "selectedProfile": { "$ref": "#/definitions/Profile" },
+        "issuedAt": { "type": "integer", "description": "颁发时间戳（ms）" },
+        "expiresInDays": { "type": "integer", "description": "过期天数（建议实现）" },
+        "state": {
+          "type": "string",
+          "enum": ["valid","temporarily_invalid","invalid"],
+          "description": "令牌状态：有效、暂时失效、无效"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "description": "标准错误响应格式",
+      "required": ["error","errorMessage"],
+      "properties": {
+        "error": { "type": "string", "description": "机器可读的错误简述" },
+        "errorMessage": { "type": "string", "description": "人类可读的详细信息" },
+        "cause": { "type": "string", "description": "可选：错误原因" }
+      },
+      "additionalProperties": false
+    },
+    "API_Meta": {
+      "type": "object",
+      "description": "GET / 返回的元数据结构（meta、skinDomains、signaturePublickey 等）",
+      "properties": {
+        "meta": {
+          "type": "object",
+          "description": "任意元数据（serverName、implementationName、implementationVersion、links 等）",
+          "additionalProperties": true
+        },
+        "skinDomains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "材质域名白名单，支持以 '.' 开头的后缀匹配规则"
+        },
+        "signaturePublickey": {
+          "type": "string",
+          "description": "PEM 格式公钥，用于验证角色属性签名"
+        },
+        "featureFlags": {
+          "type": "object",
+          "description": "常见 feature.* 开关（可选）",
+          "properties": {
+            "feature.non_email_login": { "type": "boolean" },
+            "feature.legacy_skin_api": { "type": "boolean" },
+            "feature.no_mojang_namespace": { "type": "boolean" },
+            "feature.enable_mojang_anti_features": { "type": "boolean" },
+            "feature.enable_profile_key": { "type": "boolean" },
+            "feature.username_check": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "Endpoints": {
+      "type": "object",
+      "properties": {
+        "authenticate": { "$ref": "#/definitions/AuthenticateRequestResponse" },
+        "refresh": { "$ref": "#/definitions/RefreshRequestResponse" },
+        "validate": { "$ref": "#/definitions/ValidateRequest" },
+        "invalidate": { "$ref": "#/definitions/InvalidateRequest" },
+        "signout": { "$ref": "#/definitions/SignoutRequest" },
+        "join": { "$ref": "#/definitions/JoinRequest" },
+        "hasJoined": { "$ref": "#/definitions/HasJoinedResponse" },
+        "profileQuery": { "$ref": "#/definitions/ProfileQueryResponse" },
+        "batchProfiles": { "$ref": "#/definitions/BatchProfiles" },
+        "uploadTexture": { "$ref": "#/definitions/UploadTexture" },
+        "deleteTexture": { "$ref": "#/definitions/DeleteTexture" },
+        "metaEndpoint": { "$ref": "#/definitions/MetaResponse" }
+      },
+      "additionalProperties": false
+    },
+    "AuthenticateRequestResponse": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "object",
+          "required": ["username","password","agent"],
+          "properties": {
+            "username": { "type": "string", "description": "邮箱或凭证；若启用 non_email_login 可为角色名" },
+            "password": { "type": "string" },
+            "clientToken": { "type": "string" },
+            "requestUser": { "type": "boolean", "default": false },
+            "agent": {
+              "type": "object",
+              "required": ["name","version"],
+              "properties": {
+                "name": { "type": "string" },
+                "version": { "type": "integer" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "response": {
+          "type": "object",
+          "required": ["accessToken","clientToken","availableProfiles"],
+          "properties": {
+            "accessToken": { "type": "string" },
+            "clientToken": { "type": "string" },
+            "availableProfiles": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Profile" }
+            },
+            "selectedProfile": { "$ref": "#/definitions/Profile" },
+            "user": { "$ref": "#/definitions/User" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "RefreshRequestResponse": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "object",
+          "required": ["accessToken"],
+          "properties": {
+            "accessToken": { "type": "string" },
+            "clientToken": { "type": "string" },
+            "requestUser": { "type": "boolean", "default": false },
+            "selectedProfile": { "$ref": "#/definitions/Profile" }
+          },
+          "additionalProperties": false
+        },
+        "response": {
+          "type": "object",
+          "required": ["accessToken","clientToken"],
+          "properties": {
+            "accessToken": { "type": "string" },
+            "clientToken": { "type": "string" },
+            "selectedProfile": { "$ref": "#/definitions/Profile" },
+            "user": { "$ref": "#/definitions/User" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ValidateRequest": {
+      "type": "object",
+      "required": ["accessToken"],
+      "properties": {
+        "accessToken": { "type": "string" },
+        "clientToken": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "description": "POST /authserver/validate — 成功返回 204 No Content；失败返回 ErrorResponse"
+    },
+    "InvalidateRequest": {
+      "type": "object",
+      "required": ["accessToken"],
+      "properties": {
+        "accessToken": { "type": "string" },
+        "clientToken": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "description": "POST /authserver/invalidate — 成功返回 204 No Content"
+    },
+    "SignoutRequest": {
+      "type": "object",
+      "required": ["username","password"],
+      "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "description": "POST /authserver/signout — 吊销用户所有令牌；成功返回 204 No Content"
+    },
+    "JoinRequest": {
+      "type": "object",
+      "required": ["accessToken","selectedProfile","serverId"],
+      "properties": {
+        "accessToken": { "type": "string" },
+        "selectedProfile": { "type": "string", "description": "角色 UUID（无符号）" },
+        "serverId": { "type": "string" }
+      },
+      "additionalProperties": false,
+      "description": "POST /sessionserver/session/minecraft/join — 成功返回 204 No Content。实现建议：将 serverId、accessToken、客户端 IP 存入内存数据库并设置短期过期（例如 30 秒）"
+    },
+    "HasJoinedResponse": {
+      "type": "object",
+      "description": "GET /sessionserver/session/minecraft/hasJoined?username={username}&serverId={serverId}&ip={ip} — 成功返回 Profile（含 properties 与 signature，除非 unsigned=true），失败返回 204 No Content",
+      "properties": {
+        "profile": { "$ref": "#/definitions/Profile" }
+      },
+      "additionalProperties": false
+    },
+    "ProfileQueryResponse": {
+      "type": "object",
+      "description": "GET /sessionserver/session/minecraft/profile/{uuid}?unsigned={unsigned}",
+      "properties": {
+        "profile": { "$ref": "#/definitions/Profile" }
+      },
+      "additionalProperties": false
+    },
+    "BatchProfiles": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "POST /api/profiles/minecraft — 请求为角色名数组"
+        },
+        "response": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Profile" },
+          "description": "响应为 Profile 数组（不包含 properties）"
+        }
+      },
+      "additionalProperties": false
+    },
+    "UploadTexture": {
+      "type": "object",
+      "description": "PUT /api/user/profile/{uuid}/{textureType} — multipart/form-data: model (可选, skin 时), file (image/png)。认证：Authorization: Bearer {accessToken}。成功返回 204 No Content。",
+      "properties": {
+        "pathParams": {
+          "type": "object",
+          "required": ["uuid","textureType"],
+          "properties": {
+            "uuid": { "type": "string" },
+            "textureType": { "type": "string", "enum": ["skin","cape"] }
+          },
+          "additionalProperties": false
+        },
+        "formFields": {
+          "type": "object",
+          "properties": {
+            "model": { "type": "string", "enum": ["","slim"], "description": "仅用于 skin" },
+            "file": { "type": "string", "description": "二进制文件（image/png），在 Schema 中以占位符表示" }
+          },
+          "required": ["file"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "DeleteTexture": {
+      "type": "object",
+      "description": "DELETE /api/user/profile/{uuid}/{textureType} — 认证：Authorization: Bearer {accessToken}。成功返回 204 No Content。",
+      "properties": {
+        "pathParams": {
+          "type": "object",
+          "required": ["uuid","textureType"],
+          "properties": {
+            "uuid": { "type": "string" },
+            "textureType": { "type": "string", "enum": ["skin","cape"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "MetaResponse": {
+      "type": "object",
+      "description": "GET / 返回的示例结构（meta、skinDomains、signaturePublickey）",
+      "properties": {
+        "meta": { "type": "object", "additionalProperties": true },
+        "skinDomains": { "type": "array", "items": { "type": "string" } },
+        "signaturePublickey": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "models": {
+        "User": {
+          "id": "123e4567e89b12d3a456426655440000",
+          "email": "user@example.com",
+          "properties": [
+            { "name": "preferredLanguage", "value": "zh_CN" }
+          ]
+        },
+        "Profile": {
+          "id": "abcdef0123456789abcdef0123456789",
+          "name": "PlayerOne",
+          "model": "default",
+          "properties": [
+            {
+              "name": "textures",
+              "value": "eyJ0aW1lc3RhbXAiOjE2MDAwMDAwMDAsInByb2ZpbGVJZCI6ImFiY2RlZiIsInByb2ZpbGVOYW1lIjoiUGxheWVyMSIsInRleHR1cmVzIjp7IlNLSU4iOnsidXJsIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS90ZXh0dXJlcy9lMDUxYzI3ZS5wbmcifX19"
+            }
+          ]
+        },
+        "Token": {
+          "accessToken": "random-access-token",
+          "clientToken": "client-token-uuid",
+          "issuedAt": 1650000000000,
+          "expiresInDays": 15,
+          "state": "valid"
+        }
+      },
+      "endpoints": {
+        "authenticate": {
+          "request": {
+            "username": "user@example.com",
+            "password": "password123",
+            "agent": { "name": "Minecraft", "version": 1 }
+          },
+          "response": {
+            "accessToken": "random-access-token",
+            "clientToken": "client-token-uuid",
+            "availableProfiles": [
+              { "id": "abcdef0123456789abcdef0123456789", "name": "PlayerOne" }
+            ],
+            "selectedProfile": { "id": "abcdef0123456789abcdef0123456789", "name": "PlayerOne" },
+            "user": { "id": "123e4567e89b12d3a456426655440000", "email": "user@example.com" }
+          }
+        }
+      }
+    }
+  ]
+}
