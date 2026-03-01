@@ -1,0 +1,883 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "HRPAuth API",
+    "description": "HRPAuth认证系统后端API文档",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://auth.samuelchest.com/",
+      "description": "本地开发服务器"
+    }
+  ],
+  "paths": {
+    "/login.php": {
+      "post": {
+        "summary": "用户登录",
+        "description": "用户通过邮箱和密码登录系统",
+        "tags": ["认证"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "用户邮箱",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "用户密码"
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Login successful"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "认证token"
+                    },
+                    "uid": {
+                      "type": "string",
+                      "description": "用户ID"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid email"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Email or password incorrect"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "请求方法错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Method Not Allowed"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/register.php": {
+      "post": {
+        "summary": "用户注册",
+        "description": "用户通过邮箱、昵称和密码注册系统",
+        "tags": ["认证"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "用户邮箱",
+                    "format": "email"
+                  },
+                  "nickname": {
+                    "type": "string",
+                    "description": "用户昵称",
+                    "minLength": 3
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "用户密码",
+                    "minLength": 6
+                  },
+                  "password2": {
+                    "type": "string",
+                    "description": "确认密码"
+                  }
+                },
+                "required": ["email", "nickname", "password", "password2"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "uid": {
+                      "type": "string",
+                      "description": "用户ID"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Register successful"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "examples": {
+                        "invalidEmail": {
+                          "value": "Invalid email"
+                        },
+                        "shortNickname": {
+                          "value": "Nickname too short"
+                        },
+                        "shortPassword": {
+                          "value": "Password too short"
+                        },
+                        "passwordMismatch": {
+                          "value": "Passwords not match"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "邮箱已注册",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Email already registered"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "请求方法错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Method Not Allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Database error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user.php": {
+      "get": {
+        "summary": "获取用户信息",
+        "description": "获取当前登录用户的信息",
+        "tags": ["用户"],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "获取用户信息成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "description": "用户邮箱"
+                        },
+                        "nickname": {
+                          "type": "string",
+                          "description": "用户昵称"
+                        },
+                        "avatar": {
+                          "type": "string",
+                          "description": "用户头像",
+                          "nullable": true
+                        },
+                        "is_verified": {
+                          "type": "boolean",
+                          "description": "用户是否已验证"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未登录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "examples": {
+                        "notLoggedIn": {
+                          "value": "未登录或登录已过期"
+                        },
+                        "invalidToken": {
+                          "value": "用户不存在或token无效"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout.php": {
+      "get": {
+        "summary": "用户退出登录",
+        "description": "用户退出登录系统，清除会话和cookie",
+        "tags": ["认证"],
+        "responses": {
+          "302": {
+            "description": "重定向到登录页",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "example": "login.php"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send-verification-code.php": {
+      "post": {
+        "summary": "发送邮箱验证码",
+        "description": "向用户邮箱发送验证码",
+        "tags": ["认证"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "用户邮箱",
+                    "format": "email"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发送成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Verification code sent successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid email"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "请求方法错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Method Not Allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "验证码已发送",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Verification code already sent, please wait"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "examples": {
+                        "storeFailed": {
+                          "value": "Failed to store verification code"
+                        },
+                        "smtpError": {
+                          "value": "无法连接到 SMTP 服务器"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verify-code.php": {
+      "post": {
+        "summary": "验证邮箱验证码",
+        "description": "验证用户邮箱验证码并激活用户账号",
+        "tags": ["认证"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "用户邮箱",
+                    "format": "email"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "验证码"
+                  }
+                },
+                "required": ["email", "code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "验证成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Verification successful"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "examples": {
+                        "invalidEmail": {
+                          "value": "Invalid email"
+                        },
+                        "missingCode": {
+                          "value": "Verification code is required"
+                        },
+                        "expiredCode": {
+                          "value": "Verification code expired or not found"
+                        },
+                        "invalidCode": {
+                          "value": "Invalid verification code"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在或已验证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "User not found or already verified"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "请求方法错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Method Not Allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Failed to update verification status"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/send-test-email.php": {
+      "post": {
+        "summary": "发送测试邮件",
+        "description": "发送测试邮件到指定邮箱",
+        "tags": ["邮件"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "description": "收件人邮箱",
+                    "format": "email"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "邮件主题",
+                    "default": "测试邮件"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "邮件内容"
+                  }
+                },
+                "required": ["to", "subject", "message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发送成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "邮件发送成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string",
+                          "description": "收件人邮箱"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "description": "邮件主题"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "examples": {
+                        "missingTo": {
+                          "value": "收件人邮箱不能为空"
+                        },
+                        "invalidTo": {
+                          "value": "收件人邮箱格式不正确"
+                        },
+                        "missingSubject": {
+                          "value": "邮件主题不能为空"
+                        },
+                        "missingMessage": {
+                          "value": "邮件内容不能为空"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "请求方法错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Method Not Allowed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "无法连接到 SMTP 服务器"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/totpgen.php": {
+      "get": {
+        "summary": "生成TOTP验证码",
+        "description": "根据提供的密钥生成TOTP验证码",
+        "tags": ["安全"],
+        "parameters": [
+          {
+            "name": "secret",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "TOTP密钥"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "生成成功",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "生成的TOTP验证码"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "Missing secret"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "description": "错误信息"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "成功信息"
+          }
+        }
+      }
+    }
+  }
+}

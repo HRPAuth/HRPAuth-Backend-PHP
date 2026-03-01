@@ -16,13 +16,25 @@ function sendResponse($success, $message, $data = null) {
 try {
     $pdo = getPDO();
     
-    $token = $_COOKIE['auth_token'] ?? '';
+    $token = '';
+    
+    // 1. 优先从 URL 参数获取 token
+    if (!empty($_GET['remember_token'])) {
+        $token = $_GET['remember_token'];
+    }
+    // 2. 其次从 Cookie 获取 token
+    elseif (!empty($_COOKIE['hrpa_auth'])) {
+        $parts = explode('|', $_COOKIE['hrpa_auth'], 2);
+        if (count($parts) === 2) {
+            $token = $parts[1];
+        }
+    }
     
     if (empty($token)) {
         sendResponse(false, '未登录或登录已过期');
     }
     
-    $stmt = $pdo->prepare('SELECT id, email, nickname, avatar, verified FROM users WHERE token = ?');
+    $stmt = $pdo->prepare('SELECT uid, email, nickname, avatar, verified FROM users WHERE remember_token = ?');
     $stmt->execute([$token]);
     $user = $stmt->fetch();
     
