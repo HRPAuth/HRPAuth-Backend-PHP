@@ -1,5 +1,5 @@
 <?php
-$DB = [
+$GLOBALS['DB'] = [
     'host' => getenv('DB_HOST') ?: '127.0.0.1',
     'dbname' => getenv('DB_NAME') ?: 'hademo',
     'user' => getenv('DB_USER') ?: 'hademo',
@@ -12,7 +12,7 @@ class Database {
     private $pdo;
     
     private function __construct() {
-        global $DB;
+        $DB = $GLOBALS['DB'];
         $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', $DB['host'], $DB['dbname'], $DB['charset']);
         $opts = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

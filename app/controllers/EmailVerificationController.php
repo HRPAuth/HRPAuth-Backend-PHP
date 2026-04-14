@@ -150,7 +150,7 @@ class EmailVerificationController {
         }
 
         try {
-            global $SMTP;
+            $SMTP = $GLOBALS['SMTP'];
             $this->sendSMTPMail($to, $subject, $message, $SMTP);
             
             echo json_encode([
@@ -192,7 +192,7 @@ class EmailVerificationController {
         }
 
         try {
-            global $SMTP;
+            $SMTP = $GLOBALS['SMTP'];
             $to = $email;
             $subject = 'HRPAuth - 邮箱验证码';
             $message = "您的验证码是: {$code}\n\n验证码有效期为10分钟，请尽快完成验证。\n\n如果您没有请求此验证码，请忽略此邮件。";

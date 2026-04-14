@@ -46,7 +46,7 @@ try {
         'email' => $user['email'],
         'nickname' => $user['nickname'],
         'avatar' => $user['avatar'] ?? null,
-        'is_verified' => (bool)$user['verified']
+        'verified' => (bool)$user['verified']
     ];
     
     sendResponse(true, '获取用户信息成功', $userData);

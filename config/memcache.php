@@ -1,5 +1,5 @@
 <?php
-$MEMCACHE = [
+$GLOBALS['MEMCACHE'] = [
     'host' => getenv('MEMCACHE_HOST') ?: '127.0.0.1',
     'port' => getenv('MEMCACHE_PORT') ?: 11211,
     'prefix' => getenv('MEMCACHE_PREFIX') ?: 'hrpauth_',

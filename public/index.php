@@ -40,21 +40,6 @@ $preference = include APP_ROOT . '/config/preference.php';
 $routes = [
     // 根路径访问逻辑
     'GET /' => function() use ($preference) {
-        // 跨域处理
-        $cors = $preference['portal']['cors'] ?? ['enabled' => false];
-        if ($cors['enabled']) {
-            $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-            $allowed_origins = $cors['allowed_origins'] ?? ['*'];
-            
-            if (in_array('*', $allowed_origins) || in_array($origin, $allowed_origins)) {
-                header('Access-Control-Allow-Origin: ' . $origin);
-                header('Access-Control-Allow-Methods: *');
-                header('Access-Control-Allow-Headers: *');
-                header('Access-Control-Expose-Headers: *');
-                header('Access-Control-Allow-Credentials: true');
-            }
-        }
-
         $mode = isset($preference['portal']['mode']) ? $preference['portal']['mode'] : 'redirect';
         
         if ($mode === 'metadata') {
@@ -75,27 +60,6 @@ $routes = [
         
         // 默认重定向到前端
         header('Location: ' . $preference['frontend']['url']);
-        exit;
-    },
-
-    'OPTIONS /' => function() use ($preference) {
-        // 跨域预检处理
-        $cors = $preference['portal']['cors'] ?? ['enabled' => false];
-        if ($cors['enabled']) {
-            $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-            $allowed_origins = $cors['allowed_origins'] ?? ['*'];
-            
-            if (in_array('*', $allowed_origins) || in_array($origin, $allowed_origins)) {
-                header('Access-Control-Allow-Origin: ' . $origin);
-                header('Access-Control-Allow-Methods: *');
-                header('Access-Control-Allow-Headers: *');
-                header('Access-Control-Expose-Headers: *');
-                header('Access-Control-Allow-Credentials: true');
-                header('HTTP/1.1 204 No Content');
-                exit;
-            }
-        }
-        http_response_code(204);
         exit;
     },
     

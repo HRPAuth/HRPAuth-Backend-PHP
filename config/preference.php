@@ -17,14 +17,9 @@ return [
     | 门户页面访问配置
     |--------------------------------------------------------------------------
     | mode: 'redirect' (重定向到前端) 或 'metadata' (返回后端元数据用于debug)
-    | cors: 跨域配置
     */
     'portal' => [
         'mode' => 'metadata',
-        'cors' => [
-            'enabled' => true,
-            'allowed_origins' => ['http://auth.samuelcheston.com/'], // 允许跨域的域名列表，* 表示允许所有
-        ],
     ],
     
     /*

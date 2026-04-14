@@ -2,31 +2,31 @@
   "openapi": "3.0.0",
   "info": {
     "title": "HRPAuth API",
-    "description": "HRPAuth认证系统后端API文档",
-    "version": "1.0.0"
+    "description": "HRPAuth authentication system backend API documentation",
+    "version": "2"
   },
   "servers": [
     {
       "url": "http://auth.samuelchest.com/",
-      "description": "本地开发服务器"
+      "description": "Local development server"
     }
   ],
   "paths": {
     "/": {
       "get": {
-        "summary": "根路径重定向",
-        "description": "访问根路径时重定向到前端地址",
-        "tags": ["系统"],
+        "summary": "Root path redirect",
+        "description": "Redirect to frontend address when accessing the root path",
+        "tags": ["System"],
         "responses": {
           "302": {
-            "description": "重定向到前端",
+            "description": "Redirect to frontend",
             "headers": {
               "Location": {
-                  "schema": {
-                    "type": "string",
-                    "example": "/index.html"
-                  }
+                "schema": {
+                  "type": "string",
+                  "example": "/index.html"
                 }
+              }
             }
           }
         }
@@ -34,9 +34,9 @@
     },
     "/login": {
       "post": {
-        "summary": "用户登录",
-        "description": "用户通过邮箱和密码登录系统",
-        "tags": ["认证"],
+        "summary": "User login",
+        "description": "User logs into the system using email and password",
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
@@ -46,12 +46,12 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "description": "用户邮箱",
+                    "description": "User email",
                     "format": "email"
                   },
                   "password": {
                     "type": "string",
-                    "description": "用户密码"
+                    "description": "User password"
                   }
                 },
                 "required": ["email", "password"]
@@ -61,7 +61,7 @@
         },
         "responses": {
           "200": {
-            "description": "登录成功",
+            "description": "Login successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -77,11 +77,11 @@
                     },
                     "token": {
                       "type": "string",
-                      "description": "认证token"
+                      "description": "Authentication token"
                     },
                     "uid": {
                       "type": "string",
-                      "description": "用户ID"
+                      "description": "User ID"
                     }
                   }
                 }
@@ -89,7 +89,7 @@
             }
           },
           "400": {
-            "description": "请求参数错误",
+            "description": "Invalid request parameters",
             "content": {
               "application/json": {
                 "schema": {
@@ -109,7 +109,7 @@
             }
           },
           "401": {
-            "description": "认证失败",
+            "description": "Authentication failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -129,7 +129,7 @@
             }
           },
           "405": {
-            "description": "请求方法错误",
+            "description": "Invalid request method",
             "content": {
               "application/json": {
                 "schema": {
@@ -153,9 +153,9 @@
     },
     "/register": {
       "post": {
-        "summary": "用户注册",
-        "description": "用户通过邮箱、昵称和密码注册系统",
-        "tags": ["认证"],
+        "summary": "User registration",
+        "description": "User registers to the system using email, nickname, and password",
+        "tags": ["Authentication"],
         "requestBody": {
           "required": true,
           "content": {
@@ -165,22 +165,22 @@
                 "properties": {
                   "email": {
                     "type": "string",
-                    "description": "用户邮箱",
+                    "description": "User email",
                     "format": "email"
                   },
                   "nickname": {
                     "type": "string",
-                    "description": "用户昵称",
+                    "description": "User nickname",
                     "minLength": 3
                   },
                   "password": {
                     "type": "string",
-                    "description": "用户密码",
+                    "description": "User password",
                     "minLength": 6
                   },
                   "password2": {
                     "type": "string",
-                    "description": "确认密码"
+                    "description": "Confirm password"
                   }
                 },
                 "required": ["email", "nickname", "password", "password2"]
@@ -190,7 +190,7 @@
         },
         "responses": {
           "200": {
-            "description": "注册成功",
+            "description": "Registration successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -202,7 +202,7 @@
                     },
                     "uid": {
                       "type": "string",
-                      "description": "用户ID"
+                      "description": "User ID"
                     },
                     "message": {
                       "type": "string",
@@ -214,7 +214,7 @@
             }
           },
           "400": {
-            "description": "请求参数错误",
+            "description": "Invalid request parameters",
             "content": {
               "application/json": {
                 "schema": {
@@ -247,7 +247,7 @@
             }
           },
           "409": {
-            "description": "邮箱已注册",
+            "description": "Email already registered",
             "content": {
               "application/json": {
                 "schema": {
@@ -267,7 +267,7 @@
             }
           },
           "405": {
-            "description": "请求方法错误",
+            "description": "Invalid request method",
             "content": {
               "application/json": {
                 "schema": {
@@ -287,7 +287,7 @@
             }
           },
           "500": {
-            "description": "服务器错误",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -311,12 +311,12 @@
     },
     "/user": {
       "get": {
-        "summary": "获取用户信息",
-        "description": "获取当前登录用户的信息",
-        "tags": ["用户"],
+        "summary": "Get user information",
+        "description": "Get information of the currently logged-in user",
+        "tags": ["User"],
         "responses": {
           "200": {
-            "description": "获取成功",
+            "description": "Fetch successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -328,27 +328,27 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "获取用户信息成功"
+                      "example": "User information fetched successfully"
                     },
                     "data": {
                       "type": "object",
                       "properties": {
                         "email": {
                           "type": "string",
-                          "description": "用户邮箱"
+                          "description": "User email"
                         },
                         "nickname": {
                           "type": "string",
-                          "description": "用户昵称"
+                          "description": "User nickname"
                         },
                         "avatar": {
                           "type": "string",
-                          "description": "用户头像",
+                          "description": "User avatar",
                           "nullable": true
                         },
-                        "is_verified": {
+                        "verified": {
                           "type": "boolean",
-                          "description": "用户是否已验证"
+                          "description": "Whether the user is verified"
                         }
                       }
                     }
@@ -358,7 +358,7 @@
             }
           },
           "401": {
-            "description": "未登录",
+            "description": "Not logged in",
             "content": {
               "application/json": {
                 "schema": {
@@ -372,10 +372,10 @@
                       "type": "string",
                       "examples": {
                         "notLoggedIn": {
-                          "value": "未登录或登录已过期"
+                          "value": "Not logged in or session expired"
                         },
                         "invalidToken": {
-                          "value": "用户不存在或token无效"
+                          "value": "User does not exist or token invalid"
                         }
                       }
                     }
@@ -389,19 +389,19 @@
     },
     "/logout": {
       "get": {
-        "summary": "用户退出登录",
-        "description": "用户退出登录系统，清除会话和cookie",
-        "tags": ["认证"],
+        "summary": "User logout",
+        "description": "User logs out of the system, clearing session and cookies",
+        "tags": ["Authentication"],
         "responses": {
           "302": {
-            "description": "重定向到登录页",
+            "description": "Redirect to login page",
             "headers": {
               "Location": {
-                  "schema": {
-                    "type": "string",
-                    "example": "/login"
-                  }
+                "schema": {
+                  "type": "string",
+                  "example": "/login"
                 }
+              }
             }
           }
         }
@@ -409,9 +409,9 @@
     },
     "/email-verification": {
       "post": {
-        "summary": "邮件验证相关操作",
-        "description": "包含发送测试邮件、发送验证码和验证验证码的功能",
-        "tags": ["认证", "邮件"],
+        "summary": "Email verification operations",
+        "description": "Includes sending test email, sending verification code, and verifying code",
+        "tags": ["Authentication", "Email"],
         "requestBody": {
           "required": true,
           "content": {
@@ -421,31 +421,31 @@
                 "properties": {
                   "action": {
                     "type": "string",
-                    "description": "操作类型",
+                    "description": "Operation type",
                     "enum": ["send-test-email", "send-verification-code", "verify-code"]
                   },
                   "email": {
                     "type": "string",
-                    "description": "用户邮箱",
+                    "description": "User email",
                     "format": "email"
                   },
                   "code": {
                     "type": "string",
-                    "description": "验证码"
+                    "description": "Verification code"
                   },
                   "to": {
                     "type": "string",
-                    "description": "收件人邮箱",
+                    "description": "Recipient email",
                     "format": "email"
                   },
                   "subject": {
                     "type": "string",
-                    "description": "邮件主题",
-                    "default": "测试邮件"
+                    "description": "Email subject",
+                    "default": "Test email"
                   },
                   "message": {
                     "type": "string",
-                    "description": "邮件内容"
+                    "description": "Email content"
                   }
                 },
                 "required": ["action"]
@@ -455,7 +455,7 @@
         },
         "responses": {
           "200": {
-            "description": "操作成功",
+            "description": "Operation successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -469,7 +469,7 @@
                       "type": "string",
                       "examples": {
                         "testEmailSent": {
-                          "value": "邮件发送成功"
+                          "value": "Email sent successfully"
                         },
                         "verificationCodeSent": {
                           "value": "Verification code sent successfully"
@@ -484,11 +484,11 @@
                       "properties": {
                         "to": {
                           "type": "string",
-                          "description": "收件人邮箱"
+                          "description": "Recipient email"
                         },
                         "subject": {
                           "type": "string",
-                          "description": "邮件主题"
+                          "description": "Email subject"
                         }
                       }
                     }
@@ -498,7 +498,7 @@
             }
           },
           "400": {
-            "description": "请求参数错误",
+            "description": "Invalid request parameters",
             "content": {
               "application/json": {
                 "schema": {
@@ -527,16 +527,16 @@
                           "value": "Invalid verification code"
                         },
                         "missingTo": {
-                          "value": "收件人邮箱不能为空"
+                          "value": "Recipient email cannot be empty"
                         },
                         "invalidTo": {
-                          "value": "收件人邮箱格式不正确"
+                          "value": "Recipient email format incorrect"
                         },
                         "missingSubject": {
-                          "value": "邮件主题不能为空"
+                          "value": "Email subject cannot be empty"
                         },
                         "missingMessage": {
-                          "value": "邮件内容不能为空"
+                          "value": "Email content cannot be empty"
                         }
                       }
                     }
@@ -546,7 +546,7 @@
             }
           },
           "404": {
-            "description": "用户不存在或已验证",
+            "description": "User not found or already verified",
             "content": {
               "application/json": {
                 "schema": {
@@ -566,7 +566,7 @@
             }
           },
           "405": {
-            "description": "请求方法错误",
+            "description": "Invalid request method",
             "content": {
               "application/json": {
                 "schema": {
@@ -586,7 +586,7 @@
             }
           },
           "429": {
-            "description": "验证码已发送",
+            "description": "Verification code already sent",
             "content": {
               "application/json": {
                 "schema": {
@@ -606,7 +606,7 @@
             }
           },
           "500": {
-            "description": "服务器错误",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -623,7 +623,7 @@
                           "value": "Failed to store verification code"
                         },
                         "smtpError": {
-                          "value": "无法连接到 SMTP 服务器"
+                          "value": "Unable to connect to SMTP server"
                         },
                         "updateFailed": {
                           "value": "Failed to update verification status"
@@ -640,9 +640,9 @@
     },
     "/totpgen": {
       "get": {
-        "summary": "生成TOTP验证码",
-        "description": "根据提供的密钥生成TOTP验证码",
-        "tags": ["安全"],
+        "summary": "Generate TOTP code",
+        "description": "Generate TOTP code based on the provided secret",
+        "tags": ["Security"],
         "parameters": [
           {
             "name": "secret",
@@ -650,24 +650,24 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "TOTP密钥"
+              "description": "TOTP secret"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "生成成功",
+            "description": "Generation successful",
             "content": {
               "text/plain": {
                 "schema": {
                   "type": "string",
-                  "description": "生成的TOTP验证码"
+                  "description": "Generated TOTP code"
                 }
               }
             }
           },
           "400": {
-            "description": "请求参数错误",
+            "description": "Invalid request parameters",
             "content": {
               "text/plain": {
                 "schema": {
@@ -692,7 +692,7 @@
           },
           "message": {
             "type": "string",
-            "description": "错误信息"
+            "description": "Error message"
           }
         }
       },
@@ -705,7 +705,7 @@
           },
           "message": {
             "type": "string",
-            "description": "成功信息"
+            "description": "Success message"
           }
         }
       }
