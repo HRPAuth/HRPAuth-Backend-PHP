@@ -15,7 +15,7 @@ $clientToken = isset($request['clientToken']) ? $request['clientToken'] : null;
 $requestUser = isset($request['requestUser']) ? $request['requestUser'] : false;
 $selectedProfile = isset($request['selectedProfile']) ? $request['selectedProfile'] : null;
 
-$db = Database::getInstance();
+$db = ZggDatabase::getInstance();
 
 // Check if token exists and is valid
 $stmt = $db->query('SELECT t.*, u.uuid as user_id, u.email FROM tokens t JOIN users u ON t.user_id = u.uuid WHERE t.access_token = ? AND t.state = ?', [$accessToken, 'valid']);

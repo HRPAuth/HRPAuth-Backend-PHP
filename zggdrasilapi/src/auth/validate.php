@@ -13,7 +13,7 @@ if (!isset($request['accessToken'])) {
 $accessToken = $request['accessToken'];
 $clientToken = isset($request['clientToken']) ? $request['clientToken'] : null;
 
-$db = Database::getInstance();
+$db = ZggDatabase::getInstance();
 
 // Check if token exists and is valid
 $stmt = $db->query('SELECT * FROM tokens WHERE access_token = ? AND state = ?', [$accessToken, 'valid']);

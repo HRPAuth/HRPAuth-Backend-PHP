@@ -21,7 +21,7 @@ if (!isset($agent['name']) || !isset($agent['version'])) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid agent information.');
 }
 
-$db = Database::getInstance();
+$db = ZggDatabase::getInstance();
 
 // Check if user exists
 $config = require __DIR__ . '/../../../config/zggdrasilapi.php';

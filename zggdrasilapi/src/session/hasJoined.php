@@ -14,7 +14,7 @@ if (!$username || !$serverId) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid request.');
 }
 
-$db = Database::getInstance();
+$db = ZggDatabase::getInstance();
 
 // Get profile by username
 $stmt = $db->query('SELECT id, name, model FROM profiles WHERE name = ?', [$username]);

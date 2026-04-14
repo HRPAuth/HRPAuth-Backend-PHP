@@ -2,9 +2,9 @@
 
 // Database connection utility
 
-require_once __DIR__ . '/../../../config/db.php';
+require_once __DIR__ . '/config/db.php';
 
-class Database {
+class ZggDatabase {
     private static $instance = null;
     private $connection;
     
@@ -38,5 +38,5 @@ class Database {
     }
 }
 
-// Usage: $db = Database::getInstance();
+// Usage: $db = ZggDatabase::getInstance();
 // $stmt = $db->query('SELECT * FROM users WHERE id = ?', [$userId]);

@@ -14,7 +14,7 @@ if (!$uuid || !isValidUnsignedUUID($uuid)) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid UUID.');
 }
 
-$db = Database::getInstance();
+$db = ZggDatabase::getInstance();
 
 // Get profile by UUID
 $stmt = $db->query('SELECT id, name, model FROM profiles WHERE id = ?', [$uuid]);

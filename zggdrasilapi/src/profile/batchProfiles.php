@@ -24,7 +24,7 @@ if (count($usernames) > 100) {
     sendErrorResponse('ForbiddenOperationException', 'Too many usernames.');
 }
 
-$db = Database::getInstance();
+$db = ZggDatabase::getInstance();
 
 // Get profiles by usernames
 $placeholders = str_repeat('?,', count($usernames) - 1) . '?';

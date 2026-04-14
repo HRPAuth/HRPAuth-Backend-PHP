@@ -21,8 +21,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 // Remove query string from URI
 $uri = explode('?', $uri)[0];
 
-// Handle base path prefix (if API is deployed in subdirectory)
-$basePath = '/zggdrasilapi'; // Can be moved to config
+// Handle base path prefix (aligned with public/index.php)
+$basePath = '/public';
 if (strpos($uri, $basePath) === 0) {
     $uri = substr($uri, strlen($basePath));
 }
