@@ -15,7 +15,7 @@ class AuthController {
             exit;
         }
         
-        // 支持 application/json
+        // Support application/json
         $input = json_decode(file_get_contents('php://input'), true);
         
         $email = trim($input['email'] ?? '');
@@ -44,7 +44,7 @@ class AuthController {
             exit;
         }
         
-        // 生成 token
+        // Generate token
         $uid = $user['uid'];
         $token = bin2hex(random_bytes(32));
         
@@ -104,13 +104,13 @@ class AuthController {
         
         try {
             $pdo = getPDO();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Database error']);
             exit;
         }
         
-        // 检查邮箱是否存在
+        // Check if email already exists
         $stmt = $pdo->prepare('SELECT uid FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);
         
@@ -120,7 +120,7 @@ class AuthController {
             exit;
         }
         
-        // 创建用户
+        // Create user
         $hash = password_hash($password, PASSWORD_BCRYPT);
         $ip   = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         $now  = date('Y-m-d H:i:s');
@@ -158,48 +158,37 @@ class AuthController {
     }
     
     public function logout() {
-        // Start session and attempt to remove server-side remember token if present
+        // Start session
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
-        if (!empty($_COOKIE['hrpa_auth'])) {
-            $parts = explode('|', $_COOKIE['hrpa_auth'], 2);
-            if (count($parts) === 2) {
-                [$uid, $token] = $parts;
-                try {
-                    $pdo = getPDO();
-                    $stmt = $pdo->prepare('SELECT remember_token FROM users WHERE uid = ? LIMIT 1');
-                    $stmt->execute([$uid]);
-                    $row = $stmt->fetch();
-                    if ($row && hash_equals($row['remember_token'] ?? '', $token)) {
-                        $update = $pdo->prepare('UPDATE users SET remember_token = NULL WHERE uid = ?');
-                        $update->execute([$uid]);
-                    }
-                } catch (Exception $e) {
-                    // ignore DB errors while clearing cookies
-                }
-            }
+        // Get token from various sources
+        $token = '';
+        
+        // 1. Get token from POST JSON data
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!empty($input['remember_token'])) {
+            $token = $input['remember_token'];
+        }
+        // 2. Get token from POST form data
+        elseif (!empty($_POST['remember_token'])) {
+            $token = $_POST['remember_token'];
+        }
+        // 3. Get token from URL query params
+        elseif (!empty($_GET['remember_token'])) {
+            $token = $_GET['remember_token'];
         }
         
-        // Clear all cookies available in the request
-        foreach ($_COOKIE as $name => $value) {
-            // Clear without domain
-            setcookie($name, '', time() - 3600, '/');
-            
-            // Attempt clearing with host as domain (best-effort)
-            if (!empty($_SERVER['HTTP_HOST'])) {
-                $host = $_SERVER['HTTP_HOST'];
-                // strip port if present
-                $host = preg_replace('/:\d+$/', '', $host);
-                setcookie($name, '', time() - 3600, '/', $host);
+        // Clear remember_token from database if present
+        if (!empty($token)) {
+            try {
+                $pdo = getPDO();
+                $stmt = $pdo->prepare('UPDATE users SET remember_token = NULL WHERE remember_token = ?');
+                $stmt->execute([$token]);
+            } catch (\Exception $e) {
+                // ignore DB errors
             }
-        }
-        
-        // Clear PHP session cookie as well
-        if (ini_get('session.use_cookies')) {
-            $params = session_get_cookie_params();
-            setcookie(session_name(), '', time() - 3600, $params['path'] ?? '/', $params['domain'] ?? '', $params['secure'] ?? false, $params['httponly'] ?? true);
         }
         
         // Clear session data

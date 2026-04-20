@@ -3,7 +3,7 @@
   "info": {
     "title": "HRPAuth API",
     "description": "HRPAuth authentication system backend API documentation",
-    "version": "2"
+    "version": "3"
   },
   "servers": [
     {
@@ -310,10 +310,47 @@
       }
     },
     "/user": {
-      "get": {
+      "post": {
         "summary": "Get user information",
-        "description": "Get information of the currently logged-in user",
+        "description": "Get information of the currently logged-in user. The authentication token (remember_token) can be provided via JSON body, POST form-data, or GET query parameter.",
         "tags": ["User"],
+        "parameters": [
+          {
+            "name": "remember_token",
+            "in": "query",
+            "description": "Authentication token (Alternative to body parameter)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "remember_token": {
+                    "type": "string",
+                    "description": "Authentication token"
+                  }
+                }
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "remember_token": {
+                    "type": "string",
+                    "description": "Authentication token"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Fetch successful",
@@ -328,7 +365,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "User information fetched successfully"
+                      "example": "Get user info successful"
                     },
                     "data": {
                       "type": "object",
@@ -375,7 +412,7 @@
                           "value": "Not logged in or session expired"
                         },
                         "invalidToken": {
-                          "value": "User does not exist or token invalid"
+                          "value": "User not found or invalid token"
                         }
                       }
                     }
@@ -390,7 +427,7 @@
     "/logout": {
       "get": {
         "summary": "User logout",
-        "description": "User logs out of the system, clearing session and cookies",
+        "description": "User logs out of the system, clearing session",
         "tags": ["Authentication"],
         "responses": {
           "302": {

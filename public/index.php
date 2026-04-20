@@ -1,44 +1,44 @@
 <?php
 
-// 前端控制器 - 主入口文件
+// Front Controller - Main Entry Point
 
-// 定义应用根目录
+// Define app root directory
 define('APP_ROOT', dirname(__DIR__));
 
-// 加载配置文件
+// Load configuration
 require_once APP_ROOT . '/config/db.php';
 $config = require_once APP_ROOT . '/config/preference.php';
 
-// 全局配置
+// Global config
 define('CONFIG', $config);
 
-// 加载Composer自动加载
+// Load Composer autoloader
 require_once APP_ROOT . '/vendor/autoload.php';
 
-// 注册全局异常处理
+// Register global exception handler
 use App\exceptions\ExceptionHandler;
 set_exception_handler([ExceptionHandler::class, 'handle']);
 
-// 处理请求
+// Process request
 $uri = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
 
-// 移除查询字符串
+// Remove query string
 $uri = explode('?', $uri)[0];
 
-// 移除public前缀
+// Remove public prefix
 $basePath = '/public';
 if (strpos($uri, $basePath) === 0) {
     $uri = substr($uri, strlen($basePath));
 }
 
-// 加载配置文件
+// Load preference configuration
 require_once APP_ROOT . '/config/preference.php';
 $preference = include APP_ROOT . '/config/preference.php';
 
-// 路由配置
+// Route configuration
 $routes = [
-    // 根路径访问逻辑
+    // Root path logic
     'GET /' => function() use ($preference) {
         $mode = isset($preference['portal']['mode']) ? $preference['portal']['mode'] : 'redirect';
         
@@ -58,40 +58,40 @@ $routes = [
             exit;
         }
         
-        // 默认重定向到前端
+        // Default redirect to frontend
         header('Location: ' . $preference['frontend']['url']);
         exit;
     },
     
-    // 认证相关
+    // Auth related
     'POST /login' => 'controllers/AuthController@login',
     'POST /register' => 'controllers/AuthController@register',
     'GET /logout' => 'controllers/AuthController@logout',
-    'GET /user' => 'controllers/UserController@getUser',
+    'POST /user' => 'controllers/UserController@getUser',
     
-    // 邮件验证
+    // Email verification
     'POST /email-verification' => 'controllers/EmailVerificationController@handle',
     
-    // TOTP生成
+    // TOTP generation
     'GET /totpgen' => 'controllers/TOTPController@generate',
 ];
 
-// 匹配路由
+// Match route
 $routeKey = strtoupper($method) . ' ' . $uri;
 
 if (isset($routes[$routeKey])) {
     $handler = $routes[$routeKey];
     
     if (is_callable($handler)) {
-        // 处理闭包函数
+        // Handle closure
         call_user_func($handler);
     } else {
-        // 解析控制器和方法
+        // Parse controller and method
         list($controllerPath, $method) = explode('@', $handler);
         $controllerClass = 'App\\' . str_replace('/', '\\', $controllerPath);
         
         if (class_exists($controllerClass) && method_exists($controllerClass, $method)) {
-            // 实例化控制器并调用方法
+            // Instantiate controller and call method
             $controller = new $controllerClass();
             $controller->$method();
         } else {
@@ -100,7 +100,7 @@ if (isset($routes[$routeKey])) {
         }
     }
 } else {
-    // 检查是否是zggdrasilapi请求
+    // Check if it's a zggdrasilapi request
     require_once APP_ROOT . '/zggdrasilapi/index.php';
     exit;
 }

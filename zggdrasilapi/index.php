@@ -3,7 +3,6 @@
 // Main entry point for Zggdrasil API Server
 
 require_once __DIR__ . '/src/utils/helpers.php';
-require_once __DIR__ . '/src/utils/database.php';
 
 // Helper function for route handling
 function handleRoute($method, $expectedMethod, $handler) {

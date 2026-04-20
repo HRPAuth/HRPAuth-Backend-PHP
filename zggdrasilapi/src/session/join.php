@@ -14,7 +14,7 @@ $accessToken = $request['accessToken'];
 $selectedProfile = $request['selectedProfile'];
 $serverId = $request['serverId'];
 
-$db = ZggDatabase::getInstance();
+$db = Database::getInstance();
 
 // Check if token exists and is valid
 $stmt = $db->query('SELECT * FROM tokens WHERE access_token = ? AND state = ?', [$accessToken, 'valid']);

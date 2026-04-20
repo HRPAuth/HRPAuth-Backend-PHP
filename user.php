@@ -18,25 +18,39 @@ try {
     
     $token = '';
     
-    // 1. 优先从 URL 参数获取 token
-    if (!empty($_GET['remember_token'])) {
-        $token = $_GET['remember_token'];
+    // 1. 从 POST 请求的 JSON 数据中获取 token
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!empty($input['remember_token'])) {
+        $token = $input['remember_token'];
     }
-    // 2. 其次从 Cookie 获取 token
-    elseif (!empty($_COOKIE['hrpa_auth'])) {
-        $parts = explode('|', $_COOKIE['hrpa_auth'], 2);
-        if (count($parts) === 2) {
-            $token = $parts[1];
-        }
+    // 2. 从 POST 请求的表单数据中获取 token
+    elseif (!empty($_POST['remember_token'])) {
+        $token = $_POST['remember_token'];
+    }
+    // 3. 从 URL 参数获取 token（保持向后兼容）
+    elseif (!empty($_GET['remember_token'])) {
+        $token = $_GET['remember_token'];
     }
     
     if (empty($token)) {
         sendResponse(false, '未登录或登录已过期');
     }
     
-    $stmt = $pdo->prepare('SELECT uid, email, nickname, avatar, verified FROM users WHERE remember_token = ?');
-    $stmt->execute([$token]);
-    $user = $stmt->fetch();
+    // 尝试查询用户信息，某些版本可能缺少 avatar 字段
+    try {
+        $stmt = $pdo->prepare('SELECT uid, email, nickname, avatar, verified FROM users WHERE remember_token = ?');
+        $stmt->execute([$token]);
+        $user = $stmt->fetch();
+    } catch (PDOException $e) {
+        // 回退：尝试不带 avatar 的查询
+        error_log('User info query failed, trying without avatar: ' . $e->getMessage());
+        $stmt = $pdo->prepare('SELECT uid, email, nickname, verified FROM users WHERE remember_token = ?');
+        $stmt->execute([$token]);
+        $user = $stmt->fetch();
+        if ($user) {
+            $user['avatar'] = null;
+        }
+    }
     
     if (!$user) {
         sendResponse(false, '用户不存在或token无效');

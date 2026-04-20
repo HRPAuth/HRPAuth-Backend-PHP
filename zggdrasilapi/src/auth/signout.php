@@ -13,7 +13,7 @@ if (!isset($request['username']) || !isset($request['password'])) {
 $username = $request['username'];
 $password = $request['password'];
 
-$db = ZggDatabase::getInstance();
+$db = Database::getInstance();
 
 // Check if user exists
 $stmt = $db->query('SELECT uuid, password FROM users WHERE email = ?', [$username]);

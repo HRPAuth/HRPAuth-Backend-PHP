@@ -23,28 +23,42 @@ class UserController {
             
             $token = '';
             
-            // 1. 优先从 URL 参数获取 token
-            if (!empty($_GET['remember_token'])) {
-                $token = $_GET['remember_token'];
+            // 1. 从 POST 请求的 JSON 数据中获取 token
+            $input = json_decode(file_get_contents('php://input'), true);
+            if (!empty($input['remember_token'])) {
+                $token = $input['remember_token'];
             }
-            // 2. 其次从 Cookie 获取 token
-            elseif (!empty($_COOKIE['hrpa_auth'])) {
-                $parts = explode('|', $_COOKIE['hrpa_auth'], 2);
-                if (count($parts) === 2) {
-                    $token = $parts[1];
-                }
+            // 2. 从 POST 请求的表单数据中获取 token
+            elseif (!empty($_POST['remember_token'])) {
+                $token = $_POST['remember_token'];
+            }
+            // 3. 从 URL 参数获取 token（保持向后兼容）
+            elseif (!empty($_GET['remember_token'])) {
+                $token = $_GET['remember_token'];
             }
             
             if (empty($token)) {
-                sendResponse(false, '未登录或登录已过期');
+                sendResponse(false, 'Not logged in or session expired');
             }
             
-            $stmt = $pdo->prepare('SELECT uid, email, nickname, avatar, verified FROM users WHERE remember_token = ?');
-            $stmt->execute([$token]);
-            $user = $stmt->fetch();
+            // Try to select user info. Some columns like 'avatar' might be missing in older schemas.
+            try {
+                $stmt = $pdo->prepare('SELECT uid, email, nickname, avatar, verified FROM users WHERE remember_token = ?');
+                $stmt->execute([$token]);
+                $user = $stmt->fetch();
+            } catch (\PDOException $e) {
+                // Fallback: try without 'avatar'
+                error_log('User info query failed, trying without avatar: ' . $e->getMessage());
+                $stmt = $pdo->prepare('SELECT uid, email, nickname, verified FROM users WHERE remember_token = ?');
+                $stmt->execute([$token]);
+                $user = $stmt->fetch();
+                if ($user) {
+                    $user['avatar'] = null;
+                }
+            }
             
             if (!$user) {
-                sendResponse(false, '用户不存在或token无效');
+                sendResponse(false, 'User not found or invalid token');
             }
             
             $userData = [
@@ -54,11 +68,11 @@ class UserController {
                 'verified' => (bool)$user['verified']
             ];
             
-            sendResponse(true, '获取用户信息成功', $userData);
+            sendResponse(true, 'Get user info successful', $userData);
             
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             error_log('User info error: ' . $e->getMessage());
-            sendResponse(false, '服务器错误');
+            sendResponse(false, 'Server error');
         }
     }
 }

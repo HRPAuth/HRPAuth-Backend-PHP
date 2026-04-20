@@ -54,7 +54,7 @@ class EmailVerificationController {
         $socket = @fsockopen($host, $port, $errno, $errstr, 10);
         
         if (!$socket) {
-            throw new Exception("无法连接到 SMTP 服务器: $errstr ($errno)");
+            throw new \Exception("无法连接到 SMTP 服务器: $errstr ($errno)");
         }
         
         function readSMTPResponse($socket) {
@@ -71,7 +71,7 @@ class EmailVerificationController {
         $response = readSMTPResponse($socket);
         if (substr($response, 0, 3) != '220') {
             fclose($socket);
-            throw new Exception("SMTP 服务器未响应: $response");
+            throw new \Exception("SMTP 服务器未响应: $response");
         }
         
         fputs($socket, "EHLO " . gethostname() . "\r\n");
@@ -81,21 +81,21 @@ class EmailVerificationController {
         $response = readSMTPResponse($socket);
         if (substr($response, 0, 3) != '250') {
             fclose($socket);
-            throw new Exception("MAIL FROM 失败: $response");
+            throw new \Exception("MAIL FROM 失败: $response");
         }
         
         fputs($socket, "RCPT TO: <$to>\r\n");
         $response = readSMTPResponse($socket);
         if (substr($response, 0, 3) != '250') {
             fclose($socket);
-            throw new Exception("RCPT TO 失败: $response");
+            throw new \Exception("RCPT TO 失败: $response");
         }
         
         fputs($socket, "DATA\r\n");
         $response = readSMTPResponse($socket);
         if (substr($response, 0, 3) != '354') {
             fclose($socket);
-            throw new Exception("DATA 失败: $response");
+            throw new \Exception("DATA 失败: $response");
         }
         
         $headers = "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <$from>\r\n";
@@ -111,7 +111,7 @@ class EmailVerificationController {
         $response = readSMTPResponse($socket);
         if (substr($response, 0, 3) != '250') {
             fclose($socket);
-            throw new Exception("邮件发送失败: $response");
+            throw new \Exception("邮件发送失败: $response");
         }
         
         fputs($socket, "QUIT\r\n");
@@ -122,30 +122,30 @@ class EmailVerificationController {
     
     private function sendTestEmail($input) {
         $to = trim($input['to'] ?? '');
-        $subject = trim($input['subject'] ?? '测试邮件');
+        $subject = trim($input['subject'] ?? 'Test email');
         $message = trim($input['message'] ?? '');
 
         if (empty($to)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => '收件人邮箱不能为空']);
+            echo json_encode(['success' => false, 'message' => 'Recipient email cannot be empty']);
             exit;
         }
 
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => '收件人邮箱格式不正确']);
+            echo json_encode(['success' => false, 'message' => 'Invalid recipient email format']);
             exit;
         }
 
         if (empty($subject)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => '邮件主题不能为空']);
+            echo json_encode(['success' => false, 'message' => 'Email subject cannot be empty']);
             exit;
         }
 
         if (empty($message)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => '邮件内容不能为空']);
+            echo json_encode(['success' => false, 'message' => 'Email content cannot be empty']);
             exit;
         }
 
@@ -155,13 +155,13 @@ class EmailVerificationController {
             
             echo json_encode([
                 'success' => true,
-                'message' => '邮件发送成功',
+                'message' => 'Email sent successfully',
                 'data' => [
                     'to' => $to,
                     'subject' => $subject
                 ]
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -194,8 +194,8 @@ class EmailVerificationController {
         try {
             $SMTP = $GLOBALS['SMTP'];
             $to = $email;
-            $subject = 'HRPAuth - 邮箱验证码';
-            $message = "您的验证码是: {$code}\n\n验证码有效期为10分钟，请尽快完成验证。\n\n如果您没有请求此验证码，请忽略此邮件。";
+            $subject = 'HRPAuth - Email Verification Code';
+            $message = "Your verification code is: {$code}\n\nThe code is valid for 10 minutes. Please complete the verification as soon as possible.\n\nIf you did not request this code, please ignore this email.";
             
             $this->sendSMTPMail($to, $subject, $message, $SMTP);
             
@@ -203,7 +203,7 @@ class EmailVerificationController {
                 'success' => true,
                 'message' => 'Verification code sent successfully'
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             deleteVerificationCode($email);
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -248,29 +248,21 @@ class EmailVerificationController {
             $stmt->execute([$email]);
             
             $affectedRows = $stmt->rowCount();
-            error_log("Verification update: email=$email, affected_rows=$affectedRows");
             
             if ($affectedRows === 0) {
                 http_response_code(404);
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'User not found or already verified'
-                ]);
+                echo json_encode(['success' => false, 'message' => 'User not found or already verified']);
                 exit;
             }
-        } catch (Exception $e) {
-            http_response_code(500);
-            error_log('Failed to update verified status: ' . $e->getMessage());
-            echo json_encode([
-                'success' => false,
-                'message' => 'Failed to update verification status'
-            ]);
-            exit;
-        }
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'Verification successful'
-        ]);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Verification successful'
+            ]);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to update verification status']);
+        }
     }
 }
