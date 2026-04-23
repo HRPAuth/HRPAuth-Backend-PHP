@@ -1,10 +1,11 @@
 # HRPAuth 后端 API 端点分析报告
 
-## 1. 登录 API (`login.php`)
+## 1. 登录 API
 
 ### 请求入口
-- **URL**: `/login.php`
+- **URL**: `/login`
 - **请求方法**: POST
+- **路由处理**: `controllers/AuthController@login`
 
 ### 请求值类型
 - **Content-Type**: `application/json`
@@ -41,11 +42,12 @@
 | 401 | - | `{"success": false, "message": "Email or password incorrect"}` | 邮箱或密码错误 |
 | 405 | - | `{"success": false, "message": "Method Not Allowed"}` | 请求方法错误 |
 
-## 2. 注册 API (`register.php`)
+## 2. 注册 API
 
 ### 请求入口
-- **URL**: `/register.php`
+- **URL**: `/register`
 - **请求方法**: POST
+- **路由处理**: `controllers/AuthController@register`
 
 ### 请求值类型
 - **Content-Type**: `application/json`
@@ -92,11 +94,12 @@
 | 405 | - | `{"success": false, "message": "Method Not Allowed"}` | 请求方法错误 |
 | 500 | - | `{"success": false, "message": "Database error"}` | 数据库错误 |
 
-## 3. 邮件验证 API (`email-verification.php`)
+## 3. 邮件验证 API
 
 ### 请求入口
-- **URL**: `/email-verification.php`
+- **URL**: `/email-verification`
 - **请求方法**: POST
+- **路由处理**: `controllers/EmailVerificationController@handle`
 
 ### 请求值类型
 - **Content-Type**: `application/json`
@@ -166,14 +169,15 @@
 | 500 | - | `{"success": false, "message": "Failed to update verification status"}` | 更新验证状态失败 |
 | 500 | - | `{"success": false, "message": "错误信息"}` | 邮件发送失败 |
 
-## 4. 获取用户信息 API (`user.php`)
+## 4. 获取用户信息 API
 
 ### 请求入口
-- **URL**: `/user.php`
-- **请求方法**: 支持 POST 和 GET
+- **URL**: `/user`
+- **请求方法**: POST
+- **路由处理**: `controllers/UserController@getUser`
 
 ### 请求值类型
-- **Content-Type**: `application/json` (POST) 或 `application/x-www-form-urlencoded` (GET)
+- **Content-Type**: `application/json`
 
 ### 请求参数
 | 参数名 | 类型 | 必须 | 描述 |
@@ -213,11 +217,12 @@
 | 200 | - | `{"success": false, "message": "用户不存在或token无效"}` | 用户不存在或 token 无效 |
 | 200 | - | `{"success": false, "message": "服务器错误"}` | 数据库错误 |
 
-## 5. 登出 API (`logout.php`)
+## 5. 登出 API
 
 ### 请求入口
-- **URL**: `/logout.php`
-- **请求方法**: 支持 POST 和 GET
+- **URL**: `/logout`
+- **请求方法**: GET
+- **路由处理**: `controllers/AuthController@logout`
 
 ### 请求值类型
 - **Content-Type**: 无特定要求
@@ -251,11 +256,12 @@
 ### 期望的返回值用途
 - 执行登出操作并重定向到登录页面
 
-## 6. TOTP 生成 API (`totpgen.php`)
+## 6. TOTP 生成 API
 
 ### 请求入口
-- **URL**: `/totpgen.php`
+- **URL**: `/totpgen`
 - **请求方法**: GET
+- **路由处理**: `controllers/TOTPController@generate`
 
 ### 请求值类型
 - **Content-Type**: 无特定要求
@@ -286,13 +292,28 @@
 
 本项目提供了以下 API 端点：
 
-1. **登录 API** (`/login.php`) - 用于用户登录，返回 token 和 uid
-2. **注册 API** (`/register.php`) - 用于用户注册，返回 uid
-3. **邮件验证 API** (`/email-verification.php`) - 用于发送测试邮件、发送验证码和验证验证码
-4. **获取用户信息 API** (`/user.php`) - 用于获取用户信息
-5. **登出 API** (`/logout.php`) - 用于用户登出
-6. **TOTP 生成 API** (`/totpgen.php`) - 用于生成 TOTP 验证码
+1. **登录 API** (`/login`) - 用于用户登录，返回 token 和 uid
+2. **注册 API** (`/register`) - 用于用户注册，返回 uid
+3. **邮件验证 API** (`/email-verification`) - 用于发送测试邮件、发送验证码和验证验证码
+4. **获取用户信息 API** (`/user`) - 用于获取用户信息
+5. **登出 API** (`/logout`) - 用于用户登出
+6. **TOTP 生成 API** (`/totpgen`) - 用于生成 TOTP 验证码
 
 所有 API 端点都遵循 RESTful 设计原则，使用 JSON 格式返回数据（除了 TOTP 生成 API 返回纯文本）。数据库操作主要涉及用户表的查询和更新，文件系统操作主要是发送邮件。
 
 这些 API 端点共同构成了一个完整的用户认证系统，支持用户注册、登录、邮箱验证、获取用户信息和登出等功能，同时提供了 TOTP 验证码生成功能以增强安全性。
+
+### 路由结构
+
+项目使用前端控制器模式，通过 `public/index.php` 统一处理所有请求，并根据路由配置将请求转发到相应的控制器方法：
+
+| 路由 | 方法 | 控制器 | 方法 |
+|------|------|--------|------|
+| `/login` | POST | `AuthController` | `login` |
+| `/register` | POST | `AuthController` | `register` |
+| `/logout` | GET | `AuthController` | `logout` |
+| `/user` | POST | `UserController` | `getUser` |
+| `/email-verification` | POST | `EmailVerificationController` | `handle` |
+| `/totpgen` | GET | `TOTPController` | `generate` |
+
+这种路由结构使得 API 端点更加清晰和规范，便于维护和扩展。

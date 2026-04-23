@@ -68,6 +68,13 @@ $routes = [
     'POST /register' => 'controllers/AuthController@register',
     'GET /logout' => 'controllers/AuthController@logout',
     'POST /user' => 'controllers/UserController@getUser',
+    'GET /test-user' => function() {
+        error_log('Testing UserController');
+        require_once APP_ROOT . '/app/controllers/UserController.php';
+        $controller = new App\controllers\UserController();
+        error_log('UserController instantiated');
+        $controller->getUser();
+    },
     
     // Email verification
     'POST /email-verification' => 'controllers/EmailVerificationController@handle',
@@ -79,6 +86,12 @@ $routes = [
 // Match route
 $routeKey = strtoupper($method) . ' ' . $uri;
 
+// Debug info
+error_log('Request URI: ' . $uri);
+error_log('Request Method: ' . $method);
+error_log('Route Key: ' . $routeKey);
+error_log('Available routes: ' . print_r(array_keys($routes), true));
+
 if (isset($routes[$routeKey])) {
     $handler = $routes[$routeKey];
     
@@ -88,11 +101,28 @@ if (isset($routes[$routeKey])) {
     } else {
         // Parse controller and method
         list($controllerPath, $method) = explode('@', $handler);
+        $controllerFile = APP_ROOT . '/app/' . $controllerPath . '.php';
         $controllerClass = 'App\\' . str_replace('/', '\\', $controllerPath);
+        
+        error_log('Controller File: ' . $controllerFile);
+        error_log('Controller Class: ' . $controllerClass);
+        error_log('Method: ' . $method);
+        
+        // Explicitly include the controller file
+        if (file_exists($controllerFile)) {
+            require_once $controllerFile;
+            error_log('Controller file included successfully');
+        } else {
+            error_log('Controller file not found: ' . $controllerFile);
+        }
+        
+        error_log('Class exists: ' . var_export(class_exists($controllerClass), true));
+        error_log('Method exists: ' . var_export(method_exists($controllerClass, $method), true));
         
         if (class_exists($controllerClass) && method_exists($controllerClass, $method)) {
             // Instantiate controller and call method
             $controller = new $controllerClass();
+            error_log('Controller instantiated successfully');
             $controller->$method();
         } else {
             http_response_code(404);
@@ -101,6 +131,7 @@ if (isset($routes[$routeKey])) {
     }
 } else {
     // Check if it's a zggdrasilapi request
+    error_log('Route not found, passing to zggdrasilapi');
     require_once APP_ROOT . '/zggdrasilapi/index.php';
     exit;
 }
