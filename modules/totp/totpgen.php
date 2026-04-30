@@ -1,4 +1,12 @@
 <?php
+// Define APP_ROOT if not already defined
+if (!defined('APP_ROOT')) {
+    define('APP_ROOT', dirname(dirname(__DIR__)));
+}
+
+// Include CORS handler
+require_once APP_ROOT . '/config/cors.php';
+
 header('Content-Type: text/plain; charset=utf-8');
 
 // Get secret from GET

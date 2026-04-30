@@ -85,7 +85,7 @@ $issuedAt = getCurrentTimestamp();
 $db->query('UPDATE tokens SET state = ? WHERE access_token = ?', ['invalid', $accessToken]);
 
 // Insert new token
-$config = require __DIR__ . '/../../../config/zggdrasilapi.php';
+$config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
 $db->query(
     'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [$newAccessToken, $clientToken, $token['user_id'], $profileId, $issuedAt, $config['security']['token_expiry_days'], 'valid']

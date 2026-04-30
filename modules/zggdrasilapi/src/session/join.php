@@ -37,7 +37,7 @@ if ($selectedProfile !== $token['selected_profile_id']) {
 $ip = getClientIP();
 
 // Insert session
-$config = require __DIR__ . '/../../../config/zggdrasilapi.php';
+$config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
 $db->query(
     'INSERT INTO sessions (profile_id, server_id, ip, expires_at) VALUES (?, ?, ?, NOW() + INTERVAL ? SECOND)',
     [$selectedProfile, $serverId, $ip, $config['security']['session_expiry_seconds']]

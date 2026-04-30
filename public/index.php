@@ -36,6 +36,9 @@ if (strpos($uri, $basePath) === 0) {
 require_once APP_ROOT . '/config/preference.php';
 $preference = include APP_ROOT . '/config/preference.php';
 
+// Include CORS handler
+require_once APP_ROOT . '/config/cors.php';
+
 // Route configuration
 $routes = [
     // Root path logic
@@ -132,6 +135,6 @@ if (isset($routes[$routeKey])) {
 } else {
     // Check if it's a zggdrasilapi request
     error_log('Route not found, passing to zggdrasilapi');
-    require_once APP_ROOT . '/zggdrasilapi/index.php';
+    require_once APP_ROOT . '/modules/zggdrasilapi/index.php';
     exit;
 }

@@ -35,7 +35,7 @@ function getCurrentTimestamp() {
 
 // Hash password
 function hashPassword($password) {
-    $config = require __DIR__ . '/../../../config/zggdrasilapi.php';
+    $config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
     return password_hash($password, PASSWORD_BCRYPT, ['cost' => $config['security']['password_cost']]);
 }
 

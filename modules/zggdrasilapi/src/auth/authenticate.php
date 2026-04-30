@@ -24,7 +24,7 @@ if (!isset($agent['name']) || !isset($agent['version'])) {
 $db = Database::getInstance();
 
 // Check if user exists
-$config = require __DIR__ . '/../../../config/zggdrasilapi.php';
+$config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
 $nonEmailLogin = $config['feature_flags']['non_email_login'];
 
 if ($nonEmailLogin) {
@@ -81,7 +81,7 @@ $accessToken = generateAccessToken();
 $issuedAt = getCurrentTimestamp();
 
 // Insert token into database
-$config = require __DIR__ . '/../../../config/zggdrasilapi.php';
+$config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
 $db->query(
     'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [$accessToken, $clientToken, $user['uuid'], $selectedProfile['id'], $issuedAt, $config['security']['token_expiry_days'], 'valid']

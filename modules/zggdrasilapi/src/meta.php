@@ -3,7 +3,7 @@
 // Meta endpoint
 // GET /
 
-$config = require __DIR__ . '/../../config/zggdrasilapi.php';
+$config = require __DIR__ . '/../../../config/zggdrasilapi.php';
 
 // Prepare response
 $response = [

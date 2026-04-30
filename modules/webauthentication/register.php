@@ -1,5 +1,14 @@
 <?php
-require_once __DIR__ . '/config/db.php';
+// Define APP_ROOT if not already defined
+if (!defined('APP_ROOT')) {
+    define('APP_ROOT', dirname(dirname(__DIR__)));
+}
+
+// Include CORS handler
+require_once APP_ROOT . '/config/cors.php';
+
+// Load database configuration
+require_once APP_ROOT . '/config/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
