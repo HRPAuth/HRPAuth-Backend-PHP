@@ -74,7 +74,7 @@ class AuthController {
         $input = json_decode(file_get_contents('php://input'), true);
         
         $email     = trim($input['email'] ?? '');
-        $nickname  = trim($input['nickname'] ?? '');
+        $username  = trim($input['username'] ?? '');
         $password  = $input['password'] ?? '';
         $password2 = $input['password2'] ?? '';
         
@@ -84,9 +84,9 @@ class AuthController {
             exit;
         }
         
-        if (mb_strlen($nickname) < 3) {
+        if (mb_strlen($username) < 3) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Nickname too short']);
+            echo json_encode(['success' => false, 'message' => 'Username too short']);
             exit;
         }
         
@@ -130,15 +130,15 @@ class AuthController {
         
         $insert = $pdo->prepare(
             'INSERT INTO users 
-            (email, nickname, realname, username, score, password, ip, last_sign_at, register_at, verified, verification_token) 
+            (email, username, realname, nickname, score, password, ip, last_sign_at, register_at, verified, verification_token) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         
         $insert->execute([
             $email,
-            $nickname,   // nickname
-            $nickname,   // realname
-            $nickname,   // username
+            $username,   // username
+            $username,   // realname
+            $username,   // nickname
             $score,
             $hash,
             $ip,

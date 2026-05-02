@@ -56,20 +56,20 @@
 | 参数名 | 类型 | 必须 | 描述 |
 |--------|------|------|------|
 | email | string | 是 | 用户邮箱地址 |
-| nickname | string | 是 | 用户昵称 |
+| username | string | 是 | 用户名 |
 | password | string | 是 | 用户密码 |
 | password2 | string | 是 | 确认密码 |
 
 ### 文件系统与数据库操作
 - **数据库操作**:
   - 检查邮箱是否存在：`SELECT uid FROM users WHERE email = ? LIMIT 1`
-  - 创建用户：`INSERT INTO users (email, nickname, realname, username, score, password, ip, last_sign_at, register_at, verified, verification_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  - 创建用户：`INSERT INTO users (email, username, realname, nickname, score, password, ip, last_sign_at, register_at, verified, verification_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 ### 处理操作
 1. 验证请求方法是否为 POST
 2. 解析 JSON 请求数据
 3. 验证邮箱格式
-4. 验证昵称长度
+4. 验证用户名长度
 5. 验证密码长度
 6. 验证两次密码是否一致
 7. 连接数据库
@@ -188,8 +188,8 @@
 
 ### 文件系统与数据库操作
 - **数据库操作**:
-  - 查询用户信息：`SELECT uid, email, nickname, avatar, verified FROM users WHERE remember_token = ? [AND uid = ?] [AND email = ?]`
-  - 回退查询（无 avatar 字段）：`SELECT uid, email, nickname, verified FROM users WHERE remember_token = ? [AND uid = ?] [AND email = ?]`
+  - 查询用户信息：`SELECT uid, email, username, avatar, verified FROM users WHERE remember_token = ? [AND uid = ?] [AND email = ?]`
+  - 回退查询（无 avatar 字段）：`SELECT uid, email, username, verified FROM users WHERE remember_token = ? [AND uid = ?] [AND email = ?]`
 
 ### 处理操作
 1. 启动会话
@@ -212,7 +212,7 @@
 ### 期望的返回值用途
 | 状态码 | 成功响应 | 失败响应 | 用途 |
 |--------|----------|----------|------|
-| 200 | `{"success": true, "message": "获取用户信息成功", "data": {"uid": "number", "email": "string", "nickname": "string", "avatar": "string|null", "verified": "boolean"}}` | - | 获取用户信息成功 |
+| 200 | `{"success": true, "message": "获取用户信息成功", "data": {"uid": "number", "email": "string", "username": "string", "avatar": "string|null", "verified": "boolean"}}` | - | 获取用户信息成功 |
 | 200 | - | `{"success": false, "message": "未登录或登录已过期"}` | token 为空 |
 | 200 | - | `{"success": false, "message": "用户不存在或token无效"}` | 用户不存在或 token 无效 |
 | 200 | - | `{"success": false, "message": "服务器错误"}` | 数据库错误 |

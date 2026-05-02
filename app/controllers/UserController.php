@@ -79,13 +79,13 @@ class UserController {
             
             // 尝试查询用户信息，某些版本可能缺少 avatar 字段
             try {
-                $stmt = $pdo->prepare("SELECT uid, email, nickname, avatar, verified FROM users WHERE $whereClause");
+                $stmt = $pdo->prepare("SELECT uid, email, username, avatar, verified FROM users WHERE $whereClause");
                 $stmt->execute($params);
                 $user = $stmt->fetch();
             } catch (\PDOException $e) {
                 // 回退：尝试不带 avatar 的查询
                 error_log('User info query failed, trying without avatar: ' . $e->getMessage());
-                $stmt = $pdo->prepare("SELECT uid, email, nickname, verified FROM users WHERE $whereClause");
+                $stmt = $pdo->prepare("SELECT uid, email, username, verified FROM users WHERE $whereClause");
                 $stmt->execute($params);
                 $user = $stmt->fetch();
                 if ($user) {
@@ -100,7 +100,7 @@ class UserController {
             $userData = [
                 'uid' => $user['uid'],
                 'email' => $user['email'],
-                'nickname' => $user['nickname'],
+                'username' => $user['username'],
                 'avatar' => $user['avatar'] ?? null,
                 'verified' => (bool)$user['verified']
             ];

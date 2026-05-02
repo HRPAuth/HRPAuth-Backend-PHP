@@ -37,22 +37,6 @@ return [
     |--------------------------------------------------------------------------
     */
     'frontend' => [
-        'url' => 'http://auth.samuelcheston.com/',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | CORS 配置
-    |--------------------------------------------------------------------------
-    | enabled: 是否启用 CORS
-    | allowed_origins: 允许的源 (数组)，使用 '*' 允许所有源
-    | allowed_methods: 允许的 HTTP 方法
-    | allowed_headers: 允许的请求头
-    */
-    'cors' => [
-        'enabled' => true,
-        'allowed_origins' => ['*'],
-        'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With'],
+        'url' => '/index.html',
     ],
 ];
