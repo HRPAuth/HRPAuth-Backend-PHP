@@ -1,9 +1,9 @@
 <?php
 $GLOBALS['DB'] = [
     'host' => getenv('DB_HOST') ?: '127.0.0.1',
-    'dbname' => getenv('DB_NAME') ?: 'hademo',
-    'user' => getenv('DB_USER') ?: 'hademo',
-    'pass' => getenv('DB_PASS') ?: 'hademo',
+    'dbname' => getenv('DB_NAME') ?: 'hrpa',
+    'user' => getenv('DB_USER') ?: 'hrpa',
+    'pass' => getenv('DB_PASS') ?: 'hrpa',
     'charset' => 'utf8mb4',
 ];
 
