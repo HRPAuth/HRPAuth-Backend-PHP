@@ -1,5 +1,32 @@
 # HRPAuth 后端 API 端点分析报告
 
+## 0. 根路径 API
+
+### 请求入口
+- **URL**: `/`
+- **请求方法**: GET
+- **路由处理**: 内联处理 (`public/index.php`)
+
+### 请求值类型
+- **Content-Type**: 根据 mode 返回 `application/json` 或执行重定向
+
+### 请求参数
+无
+
+### 处理操作
+1. 检查 portal mode 配置
+2. 如果 mode 为 `metadata`：返回 JSON 状态信息
+3. 如果 mode 为 `redirect`（默认）：重定向到前端 URL
+
+### 返回值类型
+- **Content-Type**: `application/json` 或执行重定向
+
+### 期望的返回值用途
+| 状态码 | 成功响应 | 用途 |
+|--------|----------|------|
+| 200 | JSON: `{"status": "online", "backend": {"name": "string", "url": "string", "version": "string", "php_version": "string", "server_time": "string"}, "message": "string"}` | metadata 模式返回后端状态 |
+| 302 | 重定向到前端 | redirect 模式跳转到前端页面 |
+
 ## 1. 登录 API
 
 ### 请求入口
@@ -256,7 +283,32 @@
 ### 期望的返回值用途
 - 执行登出操作并重定向到登录页面
 
-## 6. TOTP 生成 API
+## 6. 测试用户 API（开发用）
+
+### 请求入口
+- **URL**: `/test-user`
+- **请求方法**: GET
+- **路由处理**: 内联处理 (`public/index.php`)
+
+### 请求值类型
+- **Content-Type**: `application/json`
+
+### 请求参数
+无
+
+### 处理操作
+1. 加载 UserController
+2. 调用 getUser 方法
+
+### 返回值类型
+- **Content-Type**: `application/json`
+
+### 期望的返回值用途
+| 状态码 | 成功响应 | 失败响应 | 用途 |
+|--------|----------|----------|------|
+| 200 | - | - | 测试用端点 |
+
+## 7. TOTP 生成 API
 
 ### 请求入口
 - **URL**: `/totpgen`
@@ -288,32 +340,188 @@
 | 200 | `字符串类型的 6 位数字验证码` | - | 生成 TOTP 验证码 |
 | 400 | - | `Missing secret` | secret 参数缺失 |
 
+## 8. ZggdrasilAPI 元数据 API
+
+### 请求入口
+- **URL**: `/` (ZggdrasilAPI)
+- **请求方法**: GET
+- **路由处理**: `modules/zggdrasilapi/src/meta.php`
+
+### 请求值类型
+- **Content-Type**: `application/json`
+
+### 请求参数
+无
+
+### 处理操作
+1. 返回 ZggdrasilAPI 服务器元数据
+
+### 返回值类型
+- **Content-Type**: `application/json`
+
+## 9. ZggdrasilAPI 认证相关 API
+
+### 9.1 认证 API
+
+#### 请求入口
+- **URL**: `/authserver/authenticate`
+- **请求方法**: POST
+- **路由处理**: `modules/zggdrasilapi/src/auth/authenticate.php`
+
+### 9.2 刷新 Token API
+
+#### 请求入口
+- **URL**: `/authserver/refresh`
+- **请求方法**: POST
+- **路由处理**: `modules/zggdrasilapi/src/auth/refresh.php`
+
+### 9.3 验证 Token API
+
+#### 请求入口
+- **URL**: `/authserver/validate`
+- **请求方法**: POST
+- **路由处理**: `modules/zggdrasilapi/src/auth/validate.php`
+
+### 9.4 使 Token 失效 API
+
+#### 请求入口
+- **URL**: `/authserver/invalidate`
+- **请求方法**: POST
+- **路由处理**: `modules/zggdrasilapi/src/auth/invalidate.php`
+
+### 9.5 登出 API
+
+#### 请求入口
+- **URL**: `/authserver/signout`
+- **请求方法**: POST
+- **路由处理**: `modules/zggdrasilapi/src/auth/signout.php`
+
+## 10. ZggdrasilAPI 会话相关 API
+
+### 10.1 加入会话 API
+
+#### 请求入口
+- **URL**: `/sessionserver/session/minecraft/join`
+- **请求方法**: POST
+- **路由处理**: `modules/zggdrasilapi/src/session/join.php`
+
+### 10.2 检查加入状态 API
+
+#### 请求入口
+- **URL**: `/sessionserver/session/minecraft/hasjoined`
+- **请求方法**: GET
+- **路由处理**: `modules/zggdrasilapi/src/session/hasJoined.php`
+
+### 10.3 查询玩家档案 API
+
+#### 请求入口
+- **URL**: `/sessionserver/session/minecraft/profile`
+- **请求方法**: GET
+- **路由处理**: `modules/zggdrasilapi/src/profile/profileQuery.php`
+
+## 11. ZggdrasilAPI 档案批量查询 API
+
+### 请求入口
+- **URL**: `/api/profiles/minecraft`
+- **请求方法**: POST
+- **路由处理**: `modules/zggdrasilapi/src/profile/batchProfiles.php`
+
+## 12. ZggdrasilAPI 材质相关 API
+
+### 12.1 上传材质 API
+
+#### 请求入口
+- **URL**: `/api/user/profile/<hash>/skin`
+- **请求方法**: PUT
+- **路由处理**: `modules/zggdrasilapi/src/texture/uploadTexture.php`
+
+### 12.2 删除材质 API
+
+#### 请求入口
+- **URL**: `/api/user/profile/<hash>/skin`
+- **请求方法**: DELETE
+- **路由处理**: `modules/zggdrasilapi/src/texture/deleteTexture.php`
+
+### 12.3 上传披风 API
+
+#### 请求入口
+- **URL**: `/api/user/profile/<hash>/cape`
+- **请求方法**: PUT
+- **路由处理**: `modules/zggdrasilapi/src/texture/uploadTexture.php`
+
+### 12.4 删除披风 API
+
+#### 请求入口
+- **URL**: `/api/user/profile/<hash>/cape`
+- **请求方法**: DELETE
+- **路由处理**: `modules/zggdrasilapi/src/texture/deleteTexture.php`
+
 ## 总结
 
 本项目提供了以下 API 端点：
 
-1. **登录 API** (`/login`) - 用于用户登录，返回 token 和 uid
-2. **注册 API** (`/register`) - 用于用户注册，返回 uid
-3. **邮件验证 API** (`/email-verification`) - 用于发送测试邮件、发送验证码和验证验证码
-4. **获取用户信息 API** (`/user`) - 用于获取用户信息
-5. **登出 API** (`/logout`) - 用于用户登出
-6. **TOTP 生成 API** (`/totpgen`) - 用于生成 TOTP 验证码
+### 主系统 API（public/index.php）
+1. **根路径 API** (`GET /`) - 返回后端状态信息或重定向到前端
+2. **登录 API** (`POST /login`) - 用于用户登录，返回 token 和 uid
+3. **注册 API** (`POST /register`) - 用于用户注册，返回 uid
+4. **邮件验证 API** (`POST /email-verification`) - 用于发送测试邮件、发送验证码和验证验证码
+5. **获取用户信息 API** (`POST /user`) - 用于获取用户信息
+6. **登出 API** (`GET /logout`) - 用于用户登出
+7. **测试用户 API** (`GET /test-user`) - 开发调试用端点
+8. **TOTP 生成 API** (`GET /totpgen`) - 用于生成 TOTP 验证码
+
+### ZggdrasilAPI（Minecraft 认证协议兼容）
+
+#### 认证相关
+9. **认证 API** (`POST /authserver/authenticate`) - 用户认证
+10. **刷新 Token API** (`POST /authserver/refresh`) - 刷新访问令牌
+11. **验证 Token API** (`POST /authserver/validate`) - 验证令牌有效性
+12. **使 Token 失效 API** (`POST /authserver/invalidate`) - 使令牌失效
+13. **登出 API** (`POST /authserver/signout`) - 用户登出
+
+#### 会话相关
+14. **加入会话 API** (`POST /sessionserver/session/minecraft/join`) - 加入游戏会话
+15. **检查加入状态 API** (`GET /sessionserver/session/minecraft/hasjoined`) - 检查玩家是否加入会话
+16. **查询玩家档案 API** (`GET /sessionserver/session/minecraft/profile`) - 查询玩家档案信息
+
+#### 档案相关
+17. **批量查询档案 API** (`POST /api/profiles/minecraft`) - 批量查询玩家档案
+
+#### 材质相关
+18. **上传皮肤 API** (`PUT /api/user/profile/<hash>/skin`) - 上传玩家皮肤
+19. **删除皮肤 API** (`DELETE /api/user/profile/<hash>/skin`) - 删除玩家皮肤
+20. **上传披风 API** (`PUT /api/user/profile/<hash>/cape`) - 上传玩家披风
+21. **删除披风 API** (`DELETE /api/user/profile/<hash>/cape`) - 删除玩家披风
 
 所有 API 端点都遵循 RESTful 设计原则，使用 JSON 格式返回数据（除了 TOTP 生成 API 返回纯文本）。数据库操作主要涉及用户表的查询和更新，文件系统操作主要是发送邮件。
 
-这些 API 端点共同构成了一个完整的用户认证系统，支持用户注册、登录、邮箱验证、获取用户信息和登出等功能，同时提供了 TOTP 验证码生成功能以增强安全性。
+这些 API 端点共同构成了一个完整的用户认证系统，支持用户注册、登录、邮箱验证、获取用户信息和登出等功能，同时提供了 TOTP 验证码生成功能以增强安全性。ZggdrasilAPI 模块提供了 Minecraft 官方认证协议的兼容实现，支持游戏内会话验证和玩家材质管理。
 
 ### 路由结构
 
-项目使用前端控制器模式，通过 `public/index.php` 统一处理所有请求，并根据路由配置将请求转发到相应的控制器方法：
+项目使用前端控制器模式，通过 `public/index.php` 统一处理所有请求，并根据路由配置将请求转发到相应的控制器方法。当路由不匹配时，请求会被转发到 `modules/zggdrasilapi/index.php` 处理 Minecraft 认证协议相关的请求：
 
-| 路由 | 方法 | 控制器 | 方法 |
-|------|------|--------|------|
-| `/login` | POST | `AuthController` | `login` |
-| `/register` | POST | `AuthController` | `register` |
-| `/logout` | GET | `AuthController` | `logout` |
-| `/user` | POST | `UserController` | `getUser` |
-| `/email-verification` | POST | `EmailVerificationController` | `handle` |
-| `/totpgen` | GET | `TOTPController` | `generate` |
+| 路由 | 方法 | 控制器/处理文件 |
+|------|------|-----------------|
+| `/` | GET | 内联处理（mode-based） |
+| `/login` | POST | `AuthController@login` |
+| `/register` | POST | `AuthController@register` |
+| `/logout` | GET | `AuthController@logout` |
+| `/user` | POST | `UserController@getUser` |
+| `/test-user` | GET | 内联处理（调试） |
+| `/email-verification` | POST | `EmailVerificationController@handle` |
+| `/totpgen` | GET | `TOTPController@generate` |
+| `/` | GET | `zggdrasilapi/src/meta.php` |
+| `/authserver/authenticate` | POST | `zggdrasilapi/src/auth/authenticate.php` |
+| `/authserver/refresh` | POST | `zggdrasilapi/src/auth/refresh.php` |
+| `/authserver/validate` | POST | `zggdrasilapi/src/auth/validate.php` |
+| `/authserver/invalidate` | POST | `zggdrasilapi/src/auth/invalidate.php` |
+| `/authserver/signout` | POST | `zggdrasilapi/src/auth/signout.php` |
+| `/sessionserver/session/minecraft/join` | POST | `zggdrasilapi/src/session/join.php` |
+| `/sessionserver/session/minecraft/hasjoined` | GET | `zggdrasilapi/src/session/hasJoined.php` |
+| `/sessionserver/session/minecraft/profile` | GET | `zggdrasilapi/src/profile/profileQuery.php` |
+| `/api/profiles/minecraft` | POST | `zggdrasilapi/src/profile/batchProfiles.php` |
+| `/api/user/profile/<hash>/skin` | PUT/DELETE | `zggdrasilapi/src/texture/uploadTexture.php` / `deleteTexture.php` |
+| `/api/user/profile/<hash>/cape` | PUT/DELETE | `zggdrasilapi/src/texture/uploadTexture.php` / `deleteTexture.php` |
 
 这种路由结构使得 API 端点更加清晰和规范，便于维护和扩展。

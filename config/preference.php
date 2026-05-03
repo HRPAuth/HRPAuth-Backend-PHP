@@ -8,8 +8,8 @@ return [
     */
     'site' => [
         'name' => 'HRPAuth',
-        'url' => 'http://backend.auth.samuelcheston.com/',
-        'version' => '140426', // 后端版本号
+        'url' => 'https://hrpauth.samuelcheston.com/',
+        'version' => '5326', // 后端版本号
     ],
     
     /*
@@ -28,7 +28,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'callback' => [
-        'url' => 'http://backend.auth.samuelcheston.com/',
+        'url' => 'https://hrpauth.samuelcheston.com/',
     ],
     
     /*
@@ -37,6 +37,6 @@ return [
     |--------------------------------------------------------------------------
     */
     'frontend' => [
-        'url' => '/index.html',
+        'url' => 'https://auth.samuelcheston.com/',
     ],
 ];
