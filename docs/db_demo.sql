@@ -1,7 +1,7 @@
 /*M!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.19-11.8.6-MariaDB, for Linux (x86_64)
 --
--- Host: localhost    Database: hrpa
+-- Host: localhost    Database: hademo
 -- ------------------------------------------------------
 -- Server version	11.8.6-MariaDB-log
 
@@ -140,7 +140,7 @@ CREATE TABLE `tokens` (
   KEY `idx_tokens_client_token` (`client_token`),
   CONSTRAINT `tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`uuid`) ON DELETE CASCADE,
   CONSTRAINT `tokens_ibfk_2` FOREIGN KEY (`selected_profile_id`) REFERENCES `profiles` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -191,7 +191,6 @@ CREATE TABLE `users` (
   `isLogged` smallint(6) NOT NULL DEFAULT 0,
   `hasSession` smallint(6) NOT NULL DEFAULT 0,
   `totp` varchar(32) DEFAULT NULL,
-  `preferred_language` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`uid`),
   KEY `idx_uuid` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -204,19 +203,17 @@ CREATE TABLE `users` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES
-(1,'123e4567e89b12d3a456426655440000','me@samuelchest.com','zh_CN',962,'0','$2y$10$jt/H6Rmyh11rP7SHg/Ol9Oxp2W5pwf/XxvfpMKLoGA3i7y2bTZ7DK','192.168.1.141',0,2,'2026-02-13 14:12:31','2026-02-11 23:38:10',1,'','38cdfd2285521b3c9624b064efb129d31ad2cde6c052b6ff21e2e10c0368560e','lin8',1771429271910,0,0,0,'world',1770824290000,'192.168.1.1',NULL,NULL,0,1,NULL,'zh_CN');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 
 --
--- Dumping events for database 'hrpa'
+-- Dumping events for database 'hademo'
 --
 
 --
--- Dumping routines for database 'hrpa'
+-- Dumping routines for database 'hademo'
 --
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -228,4 +225,4 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-05-02  8:11:35
+-- Dump completed on 2026-05-03 12:42:47

@@ -93,6 +93,9 @@ $routes = [
     
     // TOTP generation
     'GET /totpgen' => 'controllers/TOTPController@generate',
+
+    // Change profile name
+    'POST /change-profile-name' => 'controllers/ChangeProfileNameController@changeProfileName',
 ];
 
 // Match route

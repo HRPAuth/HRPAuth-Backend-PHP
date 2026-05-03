@@ -339,7 +339,63 @@
 | 200 | `字符串类型的 6 位数字验证码` | - | 生成 TOTP 验证码 |
 | 400 | - | `Missing secret` | secret 参数缺失 |
 
-## 8. ZggdrasilAPI 元数据 API
+## 8. 修改档案名称 API
+
+### 请求入口
+- **URL**: `/change-profile-name`
+- **请求方法**: POST
+- **路由处理**: `controllers/ChangeProfileNameController@changeProfileName`
+
+### 请求值类型
+- **Content-Type**: `application/json` (也支持表单数据或 URL 参数)
+
+### 请求参数
+| 参数名 | 类型 | 必须 | 描述 |
+|--------|------|------|------|
+| remember_token | string | 是 | 用户登录 token |
+| name | string | 是 | 新档案名称 |
+
+### 文件系统与数据库操作
+- **数据库操作**:
+  - 查询用户信息：`SELECT uuid FROM users WHERE remember_token = ?`
+  - 查询用户档案：`SELECT id FROM profiles WHERE user_id = ? LIMIT 1`
+  - 检查名称是否被占用：`SELECT id FROM profiles WHERE name = ? AND id != ?`
+  - 更新档案名称：`UPDATE profiles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+
+### 处理操作
+1. 启动会话
+2. 连接数据库
+3. 从不同来源获取参数：
+   - POST 请求的 JSON 数据
+   - POST 请求的表单数据
+   - URL 参数
+4. 验证 token 是否为空
+5. 验证新名称是否提供
+6. 验证名称格式（长度 3-16 字符，只允许字母、数字和下划线）
+7. 根据 token 查询用户信息
+8. 根据用户 uuid 查询用户档案
+9. 检查新名称是否已被其他档案占用
+10. 更新档案名称
+11. 返回操作结果
+
+### 返回值类型
+- **Content-Type**: `application/json`
+
+### 期望的返回值用途
+| 状态码 | 成功响应 | 失败响应 | 用途 |
+|--------|----------|----------|------|
+| 200 | `{"success": true, "message": "名称修改成功", "data": {"name": "string"}}` | - | 修改档案名称成功 |
+| 200 | - | `{"success": false, "message": "未登录或登录已过期"}` | token 为空或无效 |
+| 200 | - | `{"success": false, "message": "请提供新名称"}` | 未提供新名称 |
+| 200 | - | `{"success": false, "message": "名称不能为空"}` | 名称为空 |
+| 200 | - | `{"success": false, "message": "名称长度必须在3-16个字符之间"}` | 名称长度不符合要求 |
+| 200 | - | `{"success": false, "message": "名称只能包含字母、数字和下划线"}` | 名称格式不符合要求 |
+| 200 | - | `{"success": false, "message": "用户不存在或token无效"}` | 用户不存在 |
+| 200 | - | `{"success": false, "message": "用户个人资料不存在"}` | 用户档案不存在 |
+| 200 | - | `{"success": false, "message": "该名称已被使用"}` | 名称已被其他档案占用 |
+| 200 | - | `{"success": false, "message": "服务器错误"}` | 数据库错误 |
+
+## 9. ZggdrasilAPI 元数据 API
 
 ### 请求入口
 - **URL**: `/` (ZggdrasilAPI)
@@ -373,7 +429,7 @@
 }
 ```
 
-## 9. ZggdrasilAPI 认证相关 API
+## 10. ZggdrasilAPI 认证相关 API
 
 ### 9.1 认证 API
 
@@ -537,7 +593,7 @@
 }
 ```
 
-## 10. ZggdrasilAPI 会话相关 API
+## 11. ZggdrasilAPI 会话相关 API
 
 ### 10.1 加入会话 API
 
@@ -621,7 +677,7 @@
 }
 ```
 
-## 11. ZggdrasilAPI 档案批量查询 API
+## 12. ZggdrasilAPI 档案批量查询 API
 
 ### 请求入口
 - **URL**: `/api/profiles/minecraft`
@@ -650,7 +706,7 @@
 }
 ```
 
-## 12. ZggdrasilAPI 材质相关 API
+## 13. ZggdrasilAPI 材质相关 API
 
 ### 12.1 上传材质 API
 
@@ -716,6 +772,8 @@
 7. **测试用户 API** (`GET /test-user`) - 开发调试用端点
 8. **TOTP 生成 API** (`GET /totpgen`) - 用于生成 TOTP 验证码
 
+8. **修改档案名称 API** (`POST /change-profile-name`) - 用于修改用户档案名称
+
 ### ZggdrasilAPI（Minecraft 认证协议兼容）
 
 #### 认证相关
@@ -755,6 +813,7 @@
 | `/test-user` | GET | 内联处理（调试） |
 | `/email-verification` | POST | `EmailVerificationController@handle` |
 | `/totpgen` | GET | `TOTPController@generate` |
+| `/change-profile-name` | POST | `ChangeProfileNameController@changeProfileName` |
 | `/` | GET | `zggdrasilapi/src/meta.php` |
 | `/authserver/authenticate` | POST | `zggdrasilapi/src/auth/authenticate.php` |
 | `/authserver/refresh` | POST | `zggdrasilapi/src/auth/refresh.php` |
