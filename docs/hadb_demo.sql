@@ -156,39 +156,6 @@ COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 
 --
--- Table structure for table `user_properties`
---
-
-DROP TABLE IF EXISTS `user_properties`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `user_properties` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` varchar(32) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `value` text NOT NULL,
-  `signature` text DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `user_properties_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`uuid`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `user_properties`
---
-
-SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
-LOCK TABLES `user_properties` WRITE;
-/*!40000 ALTER TABLE `user_properties` DISABLE KEYS */;
-INSERT INTO `user_properties` VALUES
-(1,'123e4567e89b12d3a456426655440000','preferredLanguage','zh_CN',NULL);
-/*!40000 ALTER TABLE `user_properties` ENABLE KEYS */;
-UNLOCK TABLES;
-COMMIT;
-SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
-
---
 -- Table structure for table `users`
 --
 
@@ -224,6 +191,7 @@ CREATE TABLE `users` (
   `isLogged` smallint(6) NOT NULL DEFAULT 0,
   `hasSession` smallint(6) NOT NULL DEFAULT 0,
   `totp` varchar(32) DEFAULT NULL,
+  `preferred_language` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`uid`),
   KEY `idx_uuid` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -237,7 +205,7 @@ SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'123e4567e89b12d3a456426655440000','me@samuelchest.com','zh_CN',962,'0','$2y$10$jt/H6Rmyh11rP7SHg/Ol9Oxp2W5pwf/XxvfpMKLoGA3i7y2bTZ7DK','192.168.1.141',0,2,'2026-02-13 14:12:31','2026-02-11 23:38:10',1,'','38cdfd2285521b3c9624b064efb129d31ad2cde6c052b6ff21e2e10c0368560e','lin8',1771429271910,0,0,0,'world',1770824290000,'192.168.1.1',NULL,NULL,0,1,NULL);
+(1,'123e4567e89b12d3a456426655440000','me@samuelchest.com','zh_CN',962,'0','$2y$10$jt/H6Rmyh11rP7SHg/Ol9Oxp2W5pwf/XxvfpMKLoGA3i7y2bTZ7DK','192.168.1.141',0,2,'2026-02-13 14:12:31','2026-02-11 23:38:10',1,'','38cdfd2285521b3c9624b064efb129d31ad2cde6c052b6ff21e2e10c0368560e','lin8',1771429271910,0,0,0,'world',1770824290000,'192.168.1.1',NULL,NULL,0,1,NULL,'zh_CN');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;

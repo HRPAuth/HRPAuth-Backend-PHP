@@ -76,7 +76,6 @@ class AuthController {
         $email     = trim($input['email'] ?? '');
         $username  = trim($input['username'] ?? '');
         $password  = $input['password'] ?? '';
-        $password2 = $input['password2'] ?? '';
         
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
@@ -96,11 +95,7 @@ class AuthController {
             exit;
         }
         
-        if ($password !== $password2) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Passwords not match']);
-            exit;
-        }
+        
         
         try {
             $pdo = getPDO();
@@ -127,18 +122,22 @@ class AuthController {
         $score = 1000;
         $verification_token = bin2hex(random_bytes(16));
         $verified = 0;
-        
+
+        $stmt = $pdo->prepare('SELECT MAX(uid) as max_uid FROM users');
+        $stmt->execute();
+        $result = $stmt->fetch();
+        $new_uid = ($result['max_uid'] ?? 0) + 1;
+
         $insert = $pdo->prepare(
-            'INSERT INTO users 
-            (email, username, realname, nickname, score, password, ip, last_sign_at, register_at, verified, verification_token) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO users
+            (uid, email, username, score, password, ip, last_sign_at, register_at, verified, verification_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        
+
         $insert->execute([
+            $new_uid,
             $email,
-            $username,   // username
-            $username,   // realname
-            $username,   // nickname
+            $username,
             $score,
             $hash,
             $ip,
@@ -147,7 +146,7 @@ class AuthController {
             $verified,
             $verification_token
         ]);
-        
+
         $uid = $pdo->lastInsertId();
         
         echo json_encode([

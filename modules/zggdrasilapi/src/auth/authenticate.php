@@ -29,11 +29,11 @@ $nonEmailLogin = $config['feature_flags']['non_email_login'];
 
 if ($nonEmailLogin) {
     // Try to find user by email or username
-    $stmt = $db->query('SELECT u.uuid, u.email, u.username, u.password FROM users u JOIN profiles p ON u.uuid = p.user_id WHERE u.email = ? OR p.name = ?', [$username, $username]);
+    $stmt = $db->query('SELECT u.uuid, u.email, u.username, u.password, u.preferred_language FROM users u JOIN profiles p ON u.uuid = p.user_id WHERE u.email = ? OR p.name = ?', [$username, $username]);
     $user = $stmt->fetch();
 } else {
     // Only allow email login
-    $stmt = $db->query('SELECT uuid, email, username, password FROM users WHERE email = ?', [$username]);
+    $stmt = $db->query('SELECT uuid, email, username, password, preferred_language FROM users WHERE email = ?', [$username]);
     $user = $stmt->fetch();
 }
 
@@ -43,15 +43,8 @@ if (!$user || !verifyPassword($password, $user['password'])) {
 
 // Get user properties if requested
 $userProperties = [];
-if ($requestUser) {
-    $stmt = $db->query('SELECT name, value, signature FROM user_properties WHERE user_id = ?', [$user['uuid']]);
-    while ($property = $stmt->fetch()) {
-        $prop = ['name' => $property['name'], 'value' => $property['value']];
-        if ($property['signature']) {
-            $prop['signature'] = $property['signature'];
-        }
-        $userProperties[] = $prop;
-    }
+if ($requestUser && $user['locale']) {
+    $userProperties[] = ['name' => 'locale', 'value' => $user['locale']];
 }
 
 // Get user profiles

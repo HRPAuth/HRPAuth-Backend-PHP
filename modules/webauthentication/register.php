@@ -17,7 +17,6 @@ $input = json_decode(file_get_contents('php://input'), true);
 $email     = trim($input['email'] ?? '');
 $username  = trim($input['username'] ?? '');
 $password  = $input['password'] ?? '';
-$password2 = $input['password2'] ?? '';
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
@@ -37,11 +36,7 @@ if (strlen($password) < 6) {
     exit;
 }
 
-if ($password !== $password2) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Passwords not match']);
-    exit;
-}
+
 
 try {
     $pdo = getPDO();
@@ -71,15 +66,13 @@ $verified = 0;
 
 $insert = $pdo->prepare(
     'INSERT INTO users 
-    (email, username, realname, nickname, score, password, ip, last_sign_at, register_at, verified, verification_token) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    (email, username, score, password, ip, last_sign_at, register_at, verified, verification_token) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
 );
 
 $insert->execute([
     $email,
-    $username,   // username
-    $username,   // realname
-    $username,   // nickname
+    $username, 
     $score,
     $hash,
     $ip,

@@ -18,7 +18,7 @@ $selectedProfile = isset($request['selectedProfile']) ? $request['selectedProfil
 $db = Database::getInstance();
 
 // Check if token exists and is valid
-$stmt = $db->query('SELECT t.*, u.uuid as user_id, u.email FROM tokens t JOIN users u ON t.user_id = u.uuid WHERE t.access_token = ? AND t.state = ?', [$accessToken, 'valid']);
+$stmt = $db->query('SELECT t.*, u.uuid as user_id, u.email, u.preferred_language FROM tokens t JOIN users u ON t.user_id = u.uuid WHERE t.access_token = ? AND t.state = ?', [$accessToken, 'valid']);
 $token = $stmt->fetch();
 
 if (!$token) {
@@ -66,15 +66,8 @@ if ($profile['model']) {
 
 // Get user properties if requested
 $userProperties = [];
-if ($requestUser) {
-    $stmt = $db->query('SELECT name, value, signature FROM user_properties WHERE user_id = ?', [$token['user_id']]);
-    while ($property = $stmt->fetch()) {
-        $prop = ['name' => $property['name'], 'value' => $property['value']];
-        if ($property['signature']) {
-            $prop['signature'] = $property['signature'];
-        }
-        $userProperties[] = $prop;
-    }
+if ($requestUser && $token['locale']) {
+    $userProperties[] = ['name' => 'locale', 'value' => $token['locale']];
 }
 
 // Generate new access token
