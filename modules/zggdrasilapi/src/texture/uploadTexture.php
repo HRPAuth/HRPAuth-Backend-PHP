@@ -90,11 +90,11 @@ if ($textureType === 'skin') {
     ];
 }
 
-// Get profile name
-$stmt = $db->query('SELECT name FROM profiles WHERE id = ?', [$uuid]);
-$profile = $stmt->fetch();
-if ($profile) {
-    $texturesPayload['profileName'] = $profile['name'];
+// Get username
+$stmt = $db->query('SELECT u.username FROM profiles p JOIN users u ON p.user_id = u.uuid WHERE p.id = ?', [$uuid]);
+$user = $stmt->fetch();
+if ($user) {
+    $texturesPayload['profileName'] = $user['username'];
 }
 
 // Encode textures payload as base64

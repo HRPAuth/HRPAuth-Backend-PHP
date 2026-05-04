@@ -52,14 +52,14 @@ if ($selectedProfile) {
 }
 
 // Get selected profile details
-$stmt = $db->query('SELECT id, name, model FROM profiles WHERE id = ?', [$profileId]);
+$stmt = $db->query('SELECT p.id, u.username, p.model FROM profiles p JOIN users u ON p.user_id = u.uuid WHERE p.id = ?', [$profileId]);
 $profile = $stmt->fetch();
 
 if (!$profile) {
     sendErrorResponse('ForbiddenOperationException', 'Selected profile not found.');
 }
 
-$profileData = ['id' => $profile['id'], 'name' => $profile['name']];
+$profileData = ['id' => $profile['id'], 'name' => $profile['username']];
 if ($profile['model']) {
     $profileData['model'] = $profile['model'];
 }
@@ -79,10 +79,15 @@ $db->query('UPDATE tokens SET state = ? WHERE access_token = ?', ['invalid', $ac
 
 // Insert new token
 $config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
-$db->query(
-    'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [$newAccessToken, $clientToken, $token['user_id'], $profileId, $issuedAt, $config['security']['token_expiry_days'], 'valid']
-);
+try {
+    $db->query(
+        'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [$newAccessToken, $clientToken, $token['user_id'], $profileId, $issuedAt, $config['security']['token_expiry_days'], 'valid']
+    );
+} catch (PDOException $e) {
+    error_log('Token insertion failed during refresh: ' . $e->getMessage());
+    sendErrorResponse('ForbiddenOperationException', 'Failed to refresh session. Please try again.');
+}
 
 // Prepare response
 $response = [

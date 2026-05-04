@@ -122,6 +122,7 @@ class AuthController {
         $score = 1000;
         $verification_token = bin2hex(random_bytes(16));
         $verified = 0;
+        $uuid = str_replace('-', '', uuid_create(UUID_TYPE_RANDOM));
 
         $stmt = $pdo->prepare('SELECT MAX(uid) as max_uid FROM users');
         $stmt->execute();
@@ -130,12 +131,13 @@ class AuthController {
 
         $insert = $pdo->prepare(
             'INSERT INTO users
-            (uid, email, username, score, password, ip, last_sign_at, register_at, verified, verification_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (uid, uuid, email, username, score, password, ip, last_sign_at, register_at, verified, verification_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
 
         $insert->execute([
             $new_uid,
+            $uuid,
             $email,
             $username,
             $score,
@@ -146,6 +148,13 @@ class AuthController {
             $verified,
             $verification_token
         ]);
+
+        // Create default profile for the user
+        $profileId = str_replace('-', '', uuid_create(UUID_TYPE_RANDOM));
+        $insertProfile = $pdo->prepare(
+            'INSERT INTO profiles (id, user_id, name, model) VALUES (?, ?, ?, ?)'
+        );
+        $insertProfile->execute([$profileId, $uuid, $username, 'default']);
 
         $uid = $pdo->lastInsertId();
         

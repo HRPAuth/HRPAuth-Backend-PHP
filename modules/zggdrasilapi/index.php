@@ -29,6 +29,17 @@ if (strpos($uri, $basePath) === 0) {
 // Convert URI to lowercase for case-insensitive matching
 $uri = strtolower($uri);
 
+// Remove /zggdrasilapi prefix if present
+$zggdrasilPrefix = '/zggdrasilapi';
+if (strpos($uri, $zggdrasilPrefix) === 0) {
+    $uri = substr($uri, strlen($zggdrasilPrefix));
+}
+
+// If URI becomes empty, set to root
+if ($uri === '') {
+    $uri = '/';
+}
+
 // Check for texture endpoints first (regex match)
 if (preg_match('/^\/api\/user\/profile\/[0-9a-f]{32}\/(skin|cape)$/', $uri)) {
     if ($method === 'PUT') {

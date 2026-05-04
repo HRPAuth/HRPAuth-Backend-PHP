@@ -52,26 +52,18 @@ $preference = include APP_ROOT . '/config/preference.php';
 $routes = [
     // Root path logic
     'GET /' => function() use ($preference) {
-        $mode = isset($preference['portal']['mode']) ? $preference['portal']['mode'] : 'redirect';
-        
-        if ($mode === 'metadata') {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'status' => 'online',
-                'backend' => [
-                    'name' => $preference['site']['name'],
-                    'url' => $preference['site']['url'],
-                    'version' => $preference['site']['version'] ?? 'unknown',
-                    'php_version' => PHP_VERSION,
-                    'server_time' => date('Y-m-d H:i:s'),
-                ],
-                'message' => 'HRPAuth Backend is running.'
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            exit;
-        }
-        
-        // Default redirect to frontend
-        header('Location: ' . $preference['frontend']['url']);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'online',
+            'backend' => [
+                'name' => $preference['site']['name'],
+                'url' => $preference['callback']['url'],
+                'version' => $preference['site']['version'] ?? 'unknown',
+                'php_version' => PHP_VERSION,
+                'server_time' => date('Y-m-d H:i:s'),
+            ],
+            'message' => 'HRPAuth Backend is running.'
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         exit;
     },
     
@@ -94,8 +86,11 @@ $routes = [
     // TOTP generation
     'GET /totpgen' => 'controllers/TOTPController@generate',
 
-    // Change profile name
-    'POST /change-profile-name' => 'controllers/ChangeProfileNameController@changeProfileName',
+    // Change username
+    'POST /change-username' => 'controllers/ChangeUsernameController@changeUsername',
+    
+    // Key generation
+    'POST /generate-key' => 'controllers/KeyGenController@generate',
 ];
 
 // Match route
@@ -144,9 +139,8 @@ if (isset($routes[$routeKey])) {
             echo json_encode(['success' => false, 'message' => 'Controller or method not found']);
         }
     }
-} else {
-    // Check if it's a zggdrasilapi request
-    error_log('Route not found, passing to zggdrasilapi');
+} else if (strpos($uri, '/zggdrasilapi') === 0) {
+    // Handle zggdrasilapi requests
     require_once APP_ROOT . '/modules/zggdrasilapi/index.php';
     exit;
 }

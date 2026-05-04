@@ -8,24 +8,21 @@
 - **路由处理**: 内联处理 (`public/index.php`)
 
 ### 请求值类型
-- **Content-Type**: 根据 mode 返回 `application/json` 或执行重定向
+- **Content-Type**: `application/json`
 
 ### 请求参数
 无
 
 ### 处理操作
-1. 检查 portal mode 配置
-2. 如果 mode 为 `metadata`：返回 JSON 状态信息
-3. 如果 mode 为 `redirect`（默认）：重定向到前端 URL
+1. 返回 JSON 状态信息
 
 ### 返回值类型
-- **Content-Type**: `application/json` 或执行重定向
+- **Content-Type**: `application/json`
 
 ### 期望的返回值用途
 | 状态码 | 成功响应 | 用途 |
 |--------|----------|------|
-| 200 | JSON: `{"status": "online", "backend": {"name": "string", "url": "string", "version": "string", "php_version": "string", "server_time": "string"}, "message": "string"}` | metadata 模式返回后端状态 |
-| 302 | 重定向到前端 | redirect 模式跳转到前端页面 |
+| 200 | JSON: `{"status": "online", "backend": {"name": "string", "url": "string", "version": "string", "php_version": "string", "server_time": "string"}, "message": "string"}` | 返回后端状态信息 |
 
 ## 1. 登录 API
 
@@ -339,12 +336,12 @@
 | 200 | `字符串类型的 6 位数字验证码` | - | 生成 TOTP 验证码 |
 | 400 | - | `Missing secret` | secret 参数缺失 |
 
-## 8. 修改档案名称 API
+## 8. 修改用户名 API
 
 ### 请求入口
-- **URL**: `/change-profile-name`
+- **URL**: `/change-username`
 - **请求方法**: POST
-- **路由处理**: `controllers/ChangeProfileNameController@changeProfileName`
+- **路由处理**: `controllers/ChangeUsernameController@changeUsername`
 
 ### 请求值类型
 - **Content-Type**: `application/json` (也支持表单数据或 URL 参数)
@@ -353,14 +350,13 @@
 | 参数名 | 类型 | 必须 | 描述 |
 |--------|------|------|------|
 | remember_token | string | 是 | 用户登录 token |
-| name | string | 是 | 新档案名称 |
+| username | string | 是 | 新用户名 |
 
 ### 文件系统与数据库操作
 - **数据库操作**:
-  - 查询用户信息：`SELECT uuid FROM users WHERE remember_token = ?`
-  - 查询用户档案：`SELECT id FROM profiles WHERE user_id = ? LIMIT 1`
-  - 检查名称是否被占用：`SELECT id FROM profiles WHERE name = ? AND id != ?`
-  - 更新档案名称：`UPDATE profiles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+  - 查询用户信息：`SELECT uid, uuid FROM users WHERE remember_token = ?`
+  - 检查用户名是否被占用：`SELECT uid FROM users WHERE username = ? AND uid != ?`
+  - 更新用户名：`UPDATE users SET username = ? WHERE uid = ?`
 
 ### 处理操作
 1. 启动会话
@@ -370,13 +366,12 @@
    - POST 请求的表单数据
    - URL 参数
 4. 验证 token 是否为空
-5. 验证新名称是否提供
-6. 验证名称格式（长度 3-16 字符，只允许字母、数字和下划线）
+5. 验证新用户名是否提供
+6. 验证用户名格式（长度 3-16 字符，只允许字母、数字和下划线）
 7. 根据 token 查询用户信息
-8. 根据用户 uuid 查询用户档案
-9. 检查新名称是否已被其他档案占用
-10. 更新档案名称
-11. 返回操作结果
+8. 检查新用户名是否已被其他用户占用
+9. 更新用户名
+10. 返回操作结果
 
 ### 返回值类型
 - **Content-Type**: `application/json`
@@ -384,18 +379,58 @@
 ### 期望的返回值用途
 | 状态码 | 成功响应 | 失败响应 | 用途 |
 |--------|----------|----------|------|
-| 200 | `{"success": true, "message": "名称修改成功", "data": {"name": "string"}}` | - | 修改档案名称成功 |
+| 200 | `{"success": true, "message": "用户名修改成功", "data": {"username": "string"}}` | - | 修改用户名成功 |
 | 200 | - | `{"success": false, "message": "未登录或登录已过期"}` | token 为空或无效 |
-| 200 | - | `{"success": false, "message": "请提供新名称"}` | 未提供新名称 |
-| 200 | - | `{"success": false, "message": "名称不能为空"}` | 名称为空 |
-| 200 | - | `{"success": false, "message": "名称长度必须在3-16个字符之间"}` | 名称长度不符合要求 |
-| 200 | - | `{"success": false, "message": "名称只能包含字母、数字和下划线"}` | 名称格式不符合要求 |
+| 200 | - | `{"success": false, "message": "请提供新用户名"}` | 未提供新用户名 |
+| 200 | - | `{"success": false, "message": "用户名不能为空"}` | 用户名为空 |
+| 200 | - | `{"success": false, "message": "用户名长度必须在3-16个字符之间"}` | 用户名长度不符合要求 |
+| 200 | - | `{"success": false, "message": "用户名只能包含字母、数字和下划线"}` | 用户名格式不符合要求 |
 | 200 | - | `{"success": false, "message": "用户不存在或token无效"}` | 用户不存在 |
-| 200 | - | `{"success": false, "message": "用户个人资料不存在"}` | 用户档案不存在 |
-| 200 | - | `{"success": false, "message": "该名称已被使用"}` | 名称已被其他档案占用 |
+| 200 | - | `{"success": false, "message": "该用户名已被使用"}` | 用户名已被占用 |
 | 200 | - | `{"success": false, "message": "服务器错误"}` | 数据库错误 |
 
-## 9. ZggdrasilAPI 元数据 API
+## 9. 密钥生成 API
+
+### 请求入口
+- **URL**: `/generate-key`
+- **请求方法**: POST
+- **路由处理**: `controllers/KeyGenController@generate`
+
+### 请求值类型
+- **Content-Type**: `application/json`
+
+### 请求参数
+无
+
+### 文件系统与数据库操作
+- **文件系统操作**:
+  - 创建密钥目录：`mkdir keys`
+  - 保存公钥：`keys/public.pem`
+  - 保存私钥：`keys/private.pem`
+- **配置文件操作**:
+  - 更新 `config/preference.php` 中的 `keygen.enable` 为 `1`
+
+### 处理操作
+1. 读取配置文件
+2. 检查 `keygen.enable` 是否为 `0`（启用状态）
+3. 如果已禁用（`enable=1`），返回 403 错误
+4. 如果启用（`enable=0`），生成 RSA 密钥对（2048 位）
+5. 保存公钥和私钥到 `keys/` 目录
+6. 更新配置文件，将 `keygen.enable` 设置为 `1`（禁用状态）
+7. 返回生成的公钥信息
+
+### 返回值类型
+- **Content-Type**: `application/json`
+
+### 期望的返回值用途
+| 状态码 | 成功响应 | 失败响应 | 用途 |
+|--------|----------|----------|------|
+| 200 | `{"success": true, "message": "Key pair generated successfully", "data": {"public_key": "string"}}` | - | 密钥生成成功 |
+| 403 | - | `{"success": false, "message": "Key generation endpoint is disabled"}` | 端点已被禁用 |
+| 500 | - | `{"success": false, "message": "Failed to generate key pair"}` | 密钥生成失败 |
+| 500 | - | `{"success": false, "message": "Failed to save keys"}` | 密钥保存失败 |
+
+## 10. ZggdrasilAPI 元数据 API
 
 ### 请求入口
 - **URL**: `/` (ZggdrasilAPI)
@@ -429,9 +464,9 @@
 }
 ```
 
-## 10. ZggdrasilAPI 认证相关 API
+## 11. ZggdrasilAPI 认证相关 API
 
-### 9.1 认证 API
+### 11.1 认证 API
 
 #### 请求入口
 - **URL**: `/authserver/authenticate`
@@ -482,7 +517,7 @@
 }
 ```
 
-### 9.2 刷新 Token API
+### 11.2 刷新 Token API
 
 #### 请求入口
 - **URL**: `/authserver/refresh`
@@ -524,7 +559,7 @@
 }
 ```
 
-### 9.3 验证 Token API
+### 11.3 验证 Token API
 
 #### 请求入口
 - **URL**: `/authserver/validate`
@@ -547,7 +582,7 @@
 }
 ```
 
-### 9.4 使 Token 失效 API
+### 11.4 使 Token 失效 API
 
 #### 请求入口
 - **URL**: `/authserver/invalidate`
@@ -570,7 +605,7 @@
 }
 ```
 
-### 9.5 登出 API
+### 11.5 登出 API
 
 #### 请求入口
 - **URL**: `/authserver/signout`
@@ -595,7 +630,7 @@
 
 ## 11. ZggdrasilAPI 会话相关 API
 
-### 10.1 加入会话 API
+### 12.1 加入会话 API
 
 #### 请求入口
 - **URL**: `/sessionserver/session/minecraft/join`
@@ -619,7 +654,7 @@
 }
 ```
 
-### 10.2 检查加入状态 API
+### 12.2 检查加入状态 API
 
 #### 请求入口
 - **URL**: `/sessionserver/session/minecraft/hasJoined?username={username}&serverId={serverId}&ip={ip}&unsigned={unsigned}`
@@ -646,7 +681,7 @@
 
 失败响应：204 No Content 或错误响应
 
-### 10.3 查询玩家档案 API
+### 12.3 查询玩家档案 API
 
 #### 请求入口
 - **URL**: `/sessionserver/session/minecraft/profile/{uuid}?unsigned={unsigned}`
@@ -708,7 +743,7 @@
 
 ## 13. ZggdrasilAPI 材质相关 API
 
-### 12.1 上传材质 API
+### 14.1 上传材质 API
 
 #### 请求入口
 - **URL**: `/api/user/profile/{uuid}/{textureType}`
@@ -734,7 +769,7 @@
 }
 ```
 
-### 12.2 删除材质 API
+### 14.2 删除材质 API
 
 #### 请求入口
 - **URL**: `/api/user/profile/{uuid}/{textureType}`
@@ -763,7 +798,7 @@
 本项目提供了以下 API 端点：
 
 ### 主系统 API（public/index.php）
-1. **根路径 API** (`GET /`) - 返回后端状态信息或重定向到前端
+1. **根路径 API** (`GET /`) - 返回后端状态信息
 2. **登录 API** (`POST /login`) - 用于用户登录，返回 token 和 uid
 3. **注册 API** (`POST /register`) - 用于用户注册，返回 uid
 4. **邮件验证 API** (`POST /email-verification`) - 用于发送测试邮件、发送验证码和验证验证码
@@ -771,29 +806,29 @@
 6. **登出 API** (`GET /logout`) - 用于用户登出
 7. **测试用户 API** (`GET /test-user`) - 开发调试用端点
 8. **TOTP 生成 API** (`GET /totpgen`) - 用于生成 TOTP 验证码
-
-8. **修改档案名称 API** (`POST /change-profile-name`) - 用于修改用户档案名称
+9. **修改用户名 API** (`POST /change-username`) - 用于修改用户名
+10. **密钥生成 API** (`POST /generate-key`) - 生成 RSA 密钥对（一次性使用）
 
 ### ZggdrasilAPI（Minecraft 认证协议兼容）
 
 #### 认证相关
-9. **认证 API** (`POST /authserver/authenticate`) - 用户认证
-10. **刷新 Token API** (`POST /authserver/refresh`) - 刷新访问令牌
-11. **验证 Token API** (`POST /authserver/validate`) - 验证令牌有效性
-12. **使 Token 失效 API** (`POST /authserver/invalidate`) - 使令牌失效
-13. **登出 API** (`POST /authserver/signout`) - 用户登出
+11. **认证 API** (`POST /authserver/authenticate`) - 用户认证
+12. **刷新 Token API** (`POST /authserver/refresh`) - 刷新访问令牌
+13. **验证 Token API** (`POST /authserver/validate`) - 验证令牌有效性
+14. **使 Token 失效 API** (`POST /authserver/invalidate`) - 使令牌失效
+15. **登出 API** (`POST /authserver/signout`) - 用户登出
 
 #### 会话相关
-14. **加入会话 API** (`POST /sessionserver/session/minecraft/join`) - 加入游戏会话
-15. **检查加入状态 API** (`GET /sessionserver/session/minecraft/hasJoined`) - 检查玩家是否加入会话
-16. **查询玩家档案 API** (`GET /sessionserver/session/minecraft/profile/{uuid}`) - 查询玩家档案信息
+16. **加入会话 API** (`POST /sessionserver/session/minecraft/join`) - 加入游戏会话
+17. **检查加入状态 API** (`GET /sessionserver/session/minecraft/hasJoined`) - 检查玩家是否加入会话
+18. **查询玩家档案 API** (`GET /sessionserver/session/minecraft/profile/{uuid}`) - 查询玩家档案信息
 
 #### 档案相关
-17. **批量查询档案 API** (`POST /api/profiles/minecraft`) - 批量查询玩家档案
+19. **批量查询档案 API** (`POST /api/profiles/minecraft`) - 批量查询玩家档案
 
 #### 材质相关
-18. **上传材质 API** (`PUT /api/user/profile/{uuid}/{textureType}`) - 上传玩家皮肤或披风
-19. **删除材质 API** (`DELETE /api/user/profile/{uuid}/{textureType}`) - 删除玩家皮肤或披风
+20. **上传材质 API** (`PUT /api/user/profile/{uuid}/{textureType}`) - 上传玩家皮肤或披风
+21. **删除材质 API** (`DELETE /api/user/profile/{uuid}/{textureType}`) - 删除玩家皮肤或披风
 
 所有 API 端点都遵循 RESTful 设计原则，使用 JSON 格式返回数据（除了 TOTP 生成 API 返回纯文本）。数据库操作主要涉及用户表的查询和更新，文件系统操作主要是发送邮件。
 
@@ -805,7 +840,7 @@
 
 | 路由 | 方法 | 控制器/处理文件 |
 |------|------|-----------------|
-| `/` | GET | 内联处理（mode-based） |
+| `/` | GET | 内联处理 |
 | `/login` | POST | `AuthController@login` |
 | `/register` | POST | `AuthController@register` |
 | `/logout` | GET | `AuthController@logout` |
@@ -813,7 +848,8 @@
 | `/test-user` | GET | 内联处理（调试） |
 | `/email-verification` | POST | `EmailVerificationController@handle` |
 | `/totpgen` | GET | `TOTPController@generate` |
-| `/change-profile-name` | POST | `ChangeProfileNameController@changeProfileName` |
+| `/change-username` | POST | `ChangeUsernameController@changeUsername` |
+| `/generate-key` | POST | `KeyGenController@generate` |
 | `/` | GET | `zggdrasilapi/src/meta.php` |
 | `/authserver/authenticate` | POST | `zggdrasilapi/src/auth/authenticate.php` |
 | `/authserver/refresh` | POST | `zggdrasilapi/src/auth/refresh.php` |

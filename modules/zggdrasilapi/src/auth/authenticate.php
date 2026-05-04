@@ -28,12 +28,10 @@ $config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
 $nonEmailLogin = $config['feature_flags']['non_email_login'];
 
 if ($nonEmailLogin) {
-    // Try to find user by email or username
-    $stmt = $db->query('SELECT u.uuid, u.email, u.username, u.password, u.preferred_language FROM users u JOIN profiles p ON u.uuid = p.user_id WHERE u.email = ? OR p.name = ?', [$username, $username]);
+    $stmt = $db->query('SELECT u.uuid, u.email, u.username, u.password, u.locale FROM users u JOIN profiles p ON u.uuid = p.user_id WHERE u.email = ? OR p.name = ?', [$username, $username]);
     $user = $stmt->fetch();
 } else {
-    // Only allow email login
-    $stmt = $db->query('SELECT uuid, email, username, password, preferred_language FROM users WHERE email = ?', [$username]);
+    $stmt = $db->query('SELECT uuid, email, username, password, locale FROM users WHERE email = ?', [$username]);
     $user = $stmt->fetch();
 }
 
@@ -75,10 +73,15 @@ $issuedAt = getCurrentTimestamp();
 
 // Insert token into database
 $config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
-$db->query(
-    'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [$accessToken, $clientToken, $user['uuid'], $selectedProfile['id'], $issuedAt, $config['security']['token_expiry_days'], 'valid']
-);
+try {
+    $db->query(
+        'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [$accessToken, $clientToken, $user['uuid'], $selectedProfile['id'], $issuedAt, $config['security']['token_expiry_days'], 'valid']
+    );
+} catch (PDOException $e) {
+    error_log('Token insertion failed: ' . $e->getMessage());
+    sendErrorResponse('ForbiddenOperationException', 'Failed to create session. Please try again.');
+}
 
 // Prepare response
 $response = [

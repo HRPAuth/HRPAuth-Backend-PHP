@@ -17,7 +17,7 @@ if (!$username || !$serverId) {
 $db = Database::getInstance();
 
 // Get profile by username
-$stmt = $db->query('SELECT id, name, model FROM profiles WHERE name = ?', [$username]);
+$stmt = $db->query('SELECT p.id, u.username, p.model FROM profiles p JOIN users u ON p.user_id = u.uuid WHERE u.username = ?', [$username]);
 $profile = $stmt->fetch();
 
 if (!$profile) {
@@ -56,7 +56,7 @@ if (!$unsigned) {
 // Prepare response
 $response = [
     'id' => $profile['id'],
-    'name' => $profile['name']
+    'name' => $profile['username']
 ];
 
 if (!empty($properties)) {

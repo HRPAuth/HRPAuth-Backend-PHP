@@ -2,29 +2,37 @@
 
 // Configuration for Zggdrasil API Server
 
+$preference = require __DIR__ . '/preference.php';
+
+// Extract domain from URL
+function extract_domain($url) {
+    $parsed = parse_url($url);
+    return $parsed['host'];
+}
+
+$frontend_url = $preference['frontend']['url'];
+$callback_url = $preference['callback']['url'];
+$frontend_domain = extract_domain($frontend_url);
+$callback_domain = extract_domain($callback_url);
+
+// Load public key from keys folder
+$public_key_path = __DIR__ . '/../keys/public.pem';
+$signature_public_key = file_get_contents($public_key_path);
+
 return [
     'server' => [
-        'name' => 'HRPAuth',
-        'implementation' => 'HRPAuth zggdrasil-api service',
-        'version' => '0.3.3',
+        'name' => $preference['site']['name'],
+        'implementation' => $preference['site']['implementation'],
+        'version' => $preference['site']['version'],
         'links' => [
-            'homepage' => 'http://auth.samuelchest.com/',
-            'register' => 'http://auth.samuelchest.com/register'
+            'homepage' => $frontend_url,
+            'register' => rtrim($frontend_url, '/') . '/register'
         ],
         'skin_domains' => [
-            'auth.samuelchest.com',
-            '.samuelchest.com'
+            $callback_domain,
+            '.' . $callback_domain
         ],
-        'signature_public_key' => '-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvtjnFD4Y6x8DBO51XgYI
-wqrxNSL5Sydf6/eeJ7xfSpvk6YNJtbMPdjBiKUugHBbkNWsK06ypcdk2MCnQDosg
-xmqfrFEi/mpakMgMMVALV/ny/49eo4tlJR0f3kvSaAlUDoGT0AjS/2meEXKy1GVj
-9iI28Fphclv7jq1xTw3eCMveZZptCHg/ejgtyBcimdo2mn/HTpT2CYwAhppJAg+b
-XgAitpMveEKN54gPMbmaxpOECsyZ3EujMzHsWjn+HeThwtLkWGoQiRPIzaAsBt1m
-up+koPDK1ADs0EWUBlxvOgVh7WTwQYqcW/xgGTrAACXjR5vaT78tmtilukFdTDMc
-AQIDAQAB
------END PUBLIC KEY-----
-'
+        'signature_public_key' => $signature_public_key
     ],
     'security' => [
         'token_expiry_days' => 15,

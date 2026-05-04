@@ -8,18 +8,8 @@ return [
     */
     'site' => [
         'name' => 'HRPAuth',
-        'url' => 'https://hrpauth.samuelcheston.com/',
-        'version' => '5326', // 后端版本号
-    ],
-    
-    /*
-    |--------------------------------------------------------------------------
-    | 门户页面访问配置
-    |--------------------------------------------------------------------------
-    | mode: 'redirect' (重定向到前端) 或 'metadata' (返回后端元数据用于debug)
-    */
-    'portal' => [
-        'mode' => 'metadata',
+        'implementation' => 'HRPAuth zggdrasil-api service',
+        'version' => '5426', // 后端版本号
     ],
     
     /*
@@ -38,5 +28,14 @@ return [
     */
     'frontend' => [
         'url' => 'https://auth.samuelcheston.com/',
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Key Generation Configuration
+    |--------------------------------------------------------------------------
+    */
+    'keygen' => [
+        'enable' => 0, // 0: enabled, 1: disabled after first use
     ],
 ];

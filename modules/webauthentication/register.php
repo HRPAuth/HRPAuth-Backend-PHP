@@ -63,14 +63,22 @@ $now  = date('Y-m-d H:i:s');
 $score = 1000;
 $verification_token = bin2hex(random_bytes(16));
 $verified = 0;
+$uuid = str_replace('-', '', sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+    mt_rand(0, 0xffff),
+    mt_rand(0, 0x0fff) | 0x4000,
+    mt_rand(0, 0x3fff) | 0x8000,
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+));
 
 $insert = $pdo->prepare(
     'INSERT INTO users 
-    (email, username, score, password, ip, last_sign_at, register_at, verified, verification_token) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    (uuid, email, username, score, password, ip, last_sign_at, register_at, verified, verification_token) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 
 $insert->execute([
+    $uuid,
     $email,
     $username, 
     $score,
@@ -81,6 +89,19 @@ $insert->execute([
     $verified,
     $verification_token
 ]);
+
+// Create default profile for the user
+$profileId = str_replace('-', '', sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+    mt_rand(0, 0xffff),
+    mt_rand(0, 0x0fff) | 0x4000,
+    mt_rand(0, 0x3fff) | 0x8000,
+    mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+));
+$insertProfile = $pdo->prepare(
+    'INSERT INTO profiles (id, user_id, name, model) VALUES (?, ?, ?, ?)'
+);
+$insertProfile->execute([$profileId, $uuid, $username, 'default']);
 
 $uid = $pdo->lastInsertId();
 

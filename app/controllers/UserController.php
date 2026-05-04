@@ -114,8 +114,8 @@ class UserController {
     }
 }
 
-class ChangeProfileNameController {
-    public function changeProfileName() {
+class ChangeUsernameController {
+    public function changeUsername() {
         header('Content-Type: application/json; charset=utf-8');
         session_start();
 
@@ -125,14 +125,14 @@ class ChangeProfileNameController {
             $pdo = getPDO();
 
             $token = '';
-            $newName = '';
+            $newUsername = '';
 
             $input = json_decode(file_get_contents('php://input'), true);
             if (!empty($input['remember_token'])) {
                 $token = $input['remember_token'];
             }
-            if (!empty($input['name'])) {
-                $newName = $input['name'];
+            if (!empty($input['username'])) {
+                $newUsername = $input['username'];
             }
 
             if (empty($_POST['remember_token']) && empty($_GET['remember_token'])) {
@@ -150,25 +150,25 @@ class ChangeProfileNameController {
                 exit;
             }
 
-            if (empty($newName)) {
-                echo json_encode(['success' => false, 'message' => '请提供新名称']);
+            if (empty($newUsername)) {
+                echo json_encode(['success' => false, 'message' => '请提供新用户名']);
                 exit;
             }
 
-            if (empty($newName)) {
-                echo json_encode(['success' => false, 'message' => '名称不能为空']);
+            if (empty($newUsername)) {
+                echo json_encode(['success' => false, 'message' => '用户名不能为空']);
                 exit;
             }
-            if (strlen($newName) < 3 || strlen($newName) > 16) {
-                echo json_encode(['success' => false, 'message' => '名称长度必须在3-16个字符之间']);
+            if (strlen($newUsername) < 3 || strlen($newUsername) > 16) {
+                echo json_encode(['success' => false, 'message' => '用户名长度必须在3-16个字符之间']);
                 exit;
             }
-            if (!preg_match('/^[a-zA-Z0-9_]+$/', $newName)) {
-                echo json_encode(['success' => false, 'message' => '名称只能包含字母、数字和下划线']);
+            if (!preg_match('/^[a-zA-Z0-9_]+$/', $newUsername)) {
+                echo json_encode(['success' => false, 'message' => '用户名只能包含字母、数字和下划线']);
                 exit;
             }
 
-            $stmt = $pdo->prepare("SELECT uuid FROM users WHERE remember_token = ?");
+            $stmt = $pdo->prepare("SELECT uid, uuid FROM users WHERE remember_token = ?");
             $stmt->execute([$token]);
             $user = $stmt->fetch();
 
@@ -177,33 +177,22 @@ class ChangeProfileNameController {
                 exit;
             }
 
-            $userUuid = $user['uuid'];
+            $userUid = $user['uid'];
 
-            $stmt = $pdo->prepare("SELECT id FROM profiles WHERE user_id = ? LIMIT 1");
-            $stmt->execute([$userUuid]);
-            $profile = $stmt->fetch();
-
-            if (!$profile) {
-                echo json_encode(['success' => false, 'message' => '用户个人资料不存在']);
-                exit;
-            }
-
-            $profileId = $profile['id'];
-
-            $stmt = $pdo->prepare("SELECT id FROM profiles WHERE name = ? AND id != ?");
-            $stmt->execute([$newName, $profileId]);
+            $stmt = $pdo->prepare("SELECT uid FROM users WHERE username = ? AND uid != ?");
+            $stmt->execute([$newUsername, $userUid]);
             if ($stmt->fetch()) {
-                echo json_encode(['success' => false, 'message' => '该名称已被使用']);
+                echo json_encode(['success' => false, 'message' => '该用户名已被使用']);
                 exit;
             }
 
-            $stmt = $pdo->prepare("UPDATE profiles SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-            $stmt->execute([$newName, $profileId]);
+            $stmt = $pdo->prepare("UPDATE users SET username = ? WHERE uid = ?");
+            $stmt->execute([$newUsername, $userUid]);
 
-            echo json_encode(['success' => true, 'message' => '名称修改成功', 'data' => ['name' => $newName]]);
+            echo json_encode(['success' => true, 'message' => '用户名修改成功', 'data' => ['username' => $newUsername]]);
 
         } catch (\PDOException $e) {
-            error_log('Change profile name error: ' . $e->getMessage());
+            error_log('Change username error: ' . $e->getMessage());
             echo json_encode(['success' => false, 'message' => '服务器错误']);
         }
     }

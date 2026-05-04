@@ -29,7 +29,7 @@ $db = Database::getInstance();
 // Get profiles by usernames
 $placeholders = str_repeat('?,', count($usernames) - 1) . '?';
 $stmt = $db->query(
-    "SELECT id, name FROM profiles WHERE name IN ($placeholders)",
+    "SELECT p.id, u.username FROM profiles p JOIN users u ON p.user_id = u.uuid WHERE u.username IN ($placeholders)",
     $usernames
 );
 
@@ -37,7 +37,7 @@ $profiles = [];
 while ($profile = $stmt->fetch()) {
     $profiles[] = [
         'id' => $profile['id'],
-        'name' => $profile['name']
+        'name' => $profile['username']
     ];
 }
 
