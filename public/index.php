@@ -27,6 +27,9 @@ define('CONFIG', $config);
 // Load Composer autoloader
 require_once APP_ROOT . '/vendor/autoload.php';
 
+// Load zggdrasilapi helpers
+require_once APP_ROOT . '/modules/zggdrasilapi/src/utils/helpers.php';
+
 // Register global exception handler
 use App\exceptions\ExceptionHandler;
 set_exception_handler([ExceptionHandler::class, 'handle']);
@@ -49,9 +52,9 @@ require_once APP_ROOT . '/config/preference.php';
 $preference = include APP_ROOT . '/config/preference.php';
 
 // Route configuration
-$routes = [
-    // Root path logic
-    'GET /' => function() use ($preference) {
+    $routes = [
+    // Backend status
+    'GET /status' => function() use ($preference) {
         header('Content-Type: application/json');
         echo json_encode([
             'status' => 'online',
@@ -85,6 +88,8 @@ $routes = [
     
     // TOTP generation
     'GET /totpgen' => 'controllers/TOTPController@generate',
+    'POST /totp/setup' => 'controllers/TOTPController@setupTOTP',
+    'POST /totp/verify' => 'controllers/TOTPController@verifyTOTP',
 
     // Change username
     'POST /change-username' => 'controllers/ChangeUsernameController@changeUsername',
@@ -139,8 +144,9 @@ if (isset($routes[$routeKey])) {
             echo json_encode(['success' => false, 'message' => 'Controller or method not found']);
         }
     }
-} else if (strpos($uri, '/zggdrasilapi') === 0) {
-    // Handle zggdrasilapi requests
+} else {
+    // Check if it's a zggdrasilapi request
+    error_log('Route not found, passing to zggdrasilapi');
     require_once APP_ROOT . '/modules/zggdrasilapi/index.php';
     exit;
 }

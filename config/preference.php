@@ -9,7 +9,7 @@ return [
     'site' => [
         'name' => 'HRPAuth',
         'implementation' => 'HRPAuth zggdrasil-api service',
-        'version' => '5426', // 后端版本号
+        'version' => '5526', // 后端版本号
     ],
     
     /*

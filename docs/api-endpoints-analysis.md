@@ -1,9 +1,9 @@
 # HRPAuth 后端 API 端点分析报告
 
-## 0. 根路径 API
+## 0. 根路径 API (Backend Status)
 
 ### 请求入口
-- **URL**: `/`
+- **URL**: `/status`
 - **请求方法**: GET
 - **路由处理**: 内联处理 (`public/index.php`)
 
@@ -14,7 +14,7 @@
 无
 
 ### 处理操作
-1. 返回 JSON 状态信息
+1. 返回 Backend 状态信息
 
 ### 返回值类型
 - **Content-Type**: `application/json`
@@ -22,7 +22,49 @@
 ### 期望的返回值用途
 | 状态码 | 成功响应 | 用途 |
 |--------|----------|------|
-| 200 | JSON: `{"status": "online", "backend": {"name": "string", "url": "string", "version": "string", "php_version": "string", "server_time": "string"}, "message": "string"}` | 返回后端状态信息 |
+| 200 | JSON: `{"status": "online", "backend": {"name": "string", "url": "string", "version": "string", "php_version": "string", "server_time": "string"}, "message": "string"}` | 返回后端状态 |
+
+## 0.1 Yggdrasil 元数据 API
+
+### 请求入口
+- **URL**: `/`
+- **请求方法**: GET
+- **路由处理**: `modules/zggdrasilapi/src/meta.php`
+
+### 请求值类型
+- **Content-Type**: `application/json`
+
+### 请求参数
+无
+
+### 处理操作
+1. 返回 Yggdrasil API 服务器元数据
+
+### 返回值类型
+- **Content-Type**: `application/json`
+
+### 期望的返回值
+```json
+{
+  "meta": {
+    "serverName": "string",
+    "implementationName": "string",
+    "implementationVersion": "string",
+    "links": {
+      "homepage": "string",
+      "register": "string"
+    },
+    "feature.non_email_login": "boolean",
+    "feature.legacy_skin_api": "boolean",
+    "feature.no_mojang_namespace": "boolean",
+    "feature.enable_mojang_anti_features": "boolean",
+    "feature.enable_profile_key": "boolean",
+    "feature.username_check": "boolean"
+  },
+  "skinDomains": ["string"],
+  "signaturePublickey": "string"
+}
+```
 
 ## 1. 登录 API
 
@@ -336,6 +378,101 @@
 | 200 | `字符串类型的 6 位数字验证码` | - | 生成 TOTP 验证码 |
 | 400 | - | `Missing secret` | secret 参数缺失 |
 
+## 7.1 TOTP 设置 API
+
+### 请求入口
+- **URL**: `/totp/setup`
+- **请求方法**: POST
+- **路由处理**: `controllers/TOTPController@setupTOTP`
+
+### 请求值类型
+- **Content-Type**: `application/json`
+
+### 请求参数
+| 参数名 | 类型 | 必须 | 描述 |
+|--------|------|------|------|
+| email | string | 是 | 用户邮箱地址 |
+| remtoken | string | 是 | 用户登录 token |
+
+### 文件系统与数据库操作
+- **数据库操作**:
+  - 查询用户信息：`SELECT uid FROM users WHERE email = ? AND remember_token = ? LIMIT 1`
+  - 更新 TOTP 密钥：`UPDATE users SET totp = ? WHERE uid = ?`
+
+### 处理操作
+1. 验证请求方法是否为 POST
+2. 解析 JSON 请求数据
+3. 验证 email 和 remtoken 参数
+4. 验证邮箱格式
+5. 连接数据库
+6. 验证用户凭据（email + remember_token）
+7. 生成 20 字符的 base32 编码 TOTP 密钥
+8. 将密钥存储到数据库 users 表的 totp 字段
+9. 返回结果
+
+### 返回值类型
+- **Content-Type**: `application/json`
+
+### 期望的返回值用途
+| 状态码 | 成功响应 | 失败响应 | 用途 |
+|--------|----------|----------|------|
+| 200 | `{"success": true, "totpkey": "string"}` | - | TOTP 密钥生成成功 |
+| 400 | - | `{"success": false, "message": "Missing email or remtoken"}` | 参数缺失 |
+| 400 | - | `{"success": false, "message": "Invalid email"}` | 邮箱格式错误 |
+| 401 | - | `{"success": false, "message": "Invalid email or remtoken"}` | 用户认证失败 |
+| 405 | - | `{"success": false, "message": "Method Not Allowed"}` | 请求方法错误 |
+| 500 | - | `{"success": false, "message": "Database connection error"}` | 数据库连接错误 |
+
+## 7.2 TOTP 验证 API
+
+### 请求入口
+- **URL**: `/totp/verify`
+- **请求方法**: POST
+- **路由处理**: `controllers/TOTPController@verifyTOTP`
+
+### 请求值类型
+- **Content-Type**: `application/json`
+
+### 请求参数
+| 参数名 | 类型 | 必须 | 描述 |
+|--------|------|------|------|
+| email | string | 是 | 用户邮箱地址 |
+| passcode | string | 是 | 用户输入的 TOTP 验证码（6位数字） |
+
+### 文件系统与数据库操作
+- **数据库操作**:
+  - 查询用户信息：`SELECT uid, totp, remember_token FROM users WHERE email = ? LIMIT 1`
+
+### 处理操作
+1. 验证请求方法是否为 POST
+2. 解析 JSON 请求数据
+3. 验证 email 和 passcode 参数
+4. 验证邮箱格式
+5. 连接数据库
+6. 查询用户及其 TOTP 密钥
+7. 验证用户是否存在且已设置 TOTP
+8. 根据当前时间和上一时间窗口生成预期验证码
+9. 验证 passcode（支持当前窗口和上一窗口，容忍时间偏移）
+10. 验证成功返回用户 remember_token
+
+### 返回值类型
+- **Content-Type**: `application/json`
+
+### 期望的返回值用途
+| 状态码 | 成功响应 | 失败响应 | 用途 |
+|--------|----------|----------|------|
+| 200 | `{"success": true, "email": "string", "rt": "string"}` | - | TOTP 验证成功 |
+| 400 | - | `{"success": false, "message": "Missing email or passcode"}` | 参数缺失 |
+| 400 | - | `{"success": false, "message": "Invalid email"}` | 邮箱格式错误 |
+| 401 | - | `{"success": false, "message": "User not found or TOTP not configured"}` | 用户不存在或未配置 TOTP |
+| 401 | - | `{"success": false, "message": "Invalid passcode"}` | 验证码错误 |
+| 405 | - | `{"success": false, "message": "Method Not Allowed"}` | 请求方法错误 |
+| 500 | - | `{"success": false, "message": "Database connection error"}` | 数据库连接错误 |
+
+### 备注
+- 支持当前时间窗口和上一时间窗口的验证码（容忍约30秒的时间偏移）
+- 验证成功时返回用户的 remember_token 可用于后续业务操作
+
 ## 8. 修改用户名 API
 
 ### 请求入口
@@ -404,20 +541,20 @@
 
 ### 文件系统与数据库操作
 - **文件系统操作**:
-  - 创建密钥目录：`mkdir keys`
-  - 保存公钥：`keys/public.pem`
-  - 保存私钥：`keys/private.pem`
+  - 创建密钥目录：`mkdir('keys', 0700, true)`
+  - 保存公钥：`file_put_contents('keys/public.pem', $publicKey)`
+  - 保存私钥：`file_put_contents('keys/private.pem', $privateKey)`
+  - 设置文件权限：`chmod('keys/*.pem', 0600)`
 - **配置文件操作**:
-  - 更新 `config/preference.php` 中的 `keygen.enable` 为 `1`
+  - 禁用端点：将 `preference.php` 中的 `'enable' => 0` 替换为 `'enable' => 1`
 
 ### 处理操作
-1. 读取配置文件
-2. 检查 `keygen.enable` 是否为 `0`（启用状态）
-3. 如果已禁用（`enable=1`），返回 403 错误
-4. 如果启用（`enable=0`），生成 RSA 密钥对（2048 位）
-5. 保存公钥和私钥到 `keys/` 目录
-6. 更新配置文件，将 `keygen.enable` 设置为 `1`（禁用状态）
-7. 返回生成的公钥信息
+1. 加载配置文件 (`config/preference.php`)
+2. 检查端点是否已禁用 (`keygen.enable`)
+3. 生成 RSA 2048-bit 密钥对
+4. 保存密钥到 `keys/` 目录
+5. 自动禁用端点（修改配置文件）
+6. 返回生成结果
 
 ### 返回值类型
 - **Content-Type**: `application/json`
@@ -426,14 +563,21 @@
 | 状态码 | 成功响应 | 失败响应 | 用途 |
 |--------|----------|----------|------|
 | 200 | `{"success": true, "message": "Key pair generated successfully", "data": {"public_key": "string"}}` | - | 密钥生成成功 |
-| 403 | - | `{"success": false, "message": "Key generation endpoint is disabled"}` | 端点已被禁用 |
+| 403 | - | `{"success": false, "message": "Key generation endpoint is disabled"}` | 端点已禁用 |
+| 500 | - | `{"success": false, "message": "Config file not found"}` | 配置文件不存在 |
 | 500 | - | `{"success": false, "message": "Failed to generate key pair"}` | 密钥生成失败 |
 | 500 | - | `{"success": false, "message": "Failed to save keys"}` | 密钥保存失败 |
+
+### 备注
+- 此端点用于生成 Yggdrasil API 签名所需的 RSA 密钥对
+- 端点在首次成功调用后会自动禁用，防止重复生成
+- 公钥用于 Yggdrasil 元数据中的 `signaturePublickey` 字段
+- 私钥用于签名玩家材质数据
 
 ## 10. ZggdrasilAPI 元数据 API
 
 ### 请求入口
-- **URL**: `/` (ZggdrasilAPI)
+- **URL**: `/` (YggdrasilAPI)
 - **请求方法**: GET
 - **路由处理**: `modules/zggdrasilapi/src/meta.php`
 
@@ -444,7 +588,8 @@
 无
 
 ### 处理操作
-1. 返回 ZggdrasilAPI 服务器元数据
+1. 加载配置（从 preference.php 和 zggdrasilapi.php）
+2. 返回 Yggdrasil API 服务器元数据
 
 ### 返回值类型
 - **Content-Type**: `application/json`
@@ -456,17 +601,32 @@
     "serverName": "string",
     "implementationName": "string",
     "implementationVersion": "string",
-    "links": {}
+    "links": {
+      "homepage": "string",
+      "register": "string"
+    },
+    "feature.non_email_login": "boolean",
+    "feature.legacy_skin_api": "boolean",
+    "feature.no_mojang_namespace": "boolean",
+    "feature.enable_mojang_anti_features": "boolean",
+    "feature.enable_profile_key": "boolean",
+    "feature.username_check": "boolean"
   },
   "skinDomains": ["string"],
-  "signaturePublickey": "string",
-  "featureFlags": {}
+  "signaturePublickey": "string"
 }
 ```
 
+### 备注
+- `serverName`, `implementation`, `version` 从 `preference.php` 动态加载
+- `links` 的 homepage 和 register URL 从 `preference.php` 的 frontend URL 动态生成
+- `skinDomains` 从 `preference.php` 的 callback URL 提取域名
+- `signaturePublickey` 从 `keys/public.pem` 文件加载
+- Feature flags 现在使用 `feature.` 前缀格式，位于 `meta` 对象内部
+
 ## 11. ZggdrasilAPI 认证相关 API
 
-### 11.1 认证 API
+### 9.1 认证 API
 
 #### 请求入口
 - **URL**: `/authserver/authenticate`
@@ -517,7 +677,7 @@
 }
 ```
 
-### 11.2 刷新 Token API
+### 9.2 刷新 Token API
 
 #### 请求入口
 - **URL**: `/authserver/refresh`
@@ -559,7 +719,7 @@
 }
 ```
 
-### 11.3 验证 Token API
+### 9.3 验证 Token API
 
 #### 请求入口
 - **URL**: `/authserver/validate`
@@ -582,7 +742,7 @@
 }
 ```
 
-### 11.4 使 Token 失效 API
+### 9.4 使 Token 失效 API
 
 #### 请求入口
 - **URL**: `/authserver/invalidate`
@@ -605,7 +765,7 @@
 }
 ```
 
-### 11.5 登出 API
+### 9.5 登出 API
 
 #### 请求入口
 - **URL**: `/authserver/signout`
@@ -628,9 +788,9 @@
 }
 ```
 
-## 11. ZggdrasilAPI 会话相关 API
+## 12. ZggdrasilAPI 会话相关 API
 
-### 12.1 加入会话 API
+### 10.1 加入会话 API
 
 #### 请求入口
 - **URL**: `/sessionserver/session/minecraft/join`
@@ -654,7 +814,7 @@
 }
 ```
 
-### 12.2 检查加入状态 API
+### 10.2 检查加入状态 API
 
 #### 请求入口
 - **URL**: `/sessionserver/session/minecraft/hasJoined?username={username}&serverId={serverId}&ip={ip}&unsigned={unsigned}`
@@ -681,7 +841,7 @@
 
 失败响应：204 No Content 或错误响应
 
-### 12.3 查询玩家档案 API
+### 10.3 查询玩家档案 API
 
 #### 请求入口
 - **URL**: `/sessionserver/session/minecraft/profile/{uuid}?unsigned={unsigned}`
@@ -712,7 +872,7 @@
 }
 ```
 
-## 12. ZggdrasilAPI 档案批量查询 API
+## 13. ZggdrasilAPI 档案批量查询 API
 
 ### 请求入口
 - **URL**: `/api/profiles/minecraft`
@@ -741,9 +901,9 @@
 }
 ```
 
-## 13. ZggdrasilAPI 材质相关 API
+## 14. ZggdrasilAPI 材质相关 API
 
-### 14.1 上传材质 API
+### 12.1 上传材质 API
 
 #### 请求入口
 - **URL**: `/api/user/profile/{uuid}/{textureType}`
@@ -769,7 +929,7 @@
 }
 ```
 
-### 14.2 删除材质 API
+### 12.2 删除材质 API
 
 #### 请求入口
 - **URL**: `/api/user/profile/{uuid}/{textureType}`
@@ -798,7 +958,7 @@
 本项目提供了以下 API 端点：
 
 ### 主系统 API（public/index.php）
-1. **根路径 API** (`GET /`) - 返回后端状态信息
+1. **根路径 API** (`GET /status`) - 返回后端状态信息
 2. **登录 API** (`POST /login`) - 用于用户登录，返回 token 和 uid
 3. **注册 API** (`POST /register`) - 用于用户注册，返回 uid
 4. **邮件验证 API** (`POST /email-verification`) - 用于发送测试邮件、发送验证码和验证验证码
@@ -807,7 +967,7 @@
 7. **测试用户 API** (`GET /test-user`) - 开发调试用端点
 8. **TOTP 生成 API** (`GET /totpgen`) - 用于生成 TOTP 验证码
 9. **修改用户名 API** (`POST /change-username`) - 用于修改用户名
-10. **密钥生成 API** (`POST /generate-key`) - 生成 RSA 密钥对（一次性使用）
+10. **密钥生成 API** (`POST /generate-key`) - 用于生成 Yggdrasil API 签名密钥对
 
 ### ZggdrasilAPI（Minecraft 认证协议兼容）
 
@@ -840,7 +1000,7 @@
 
 | 路由 | 方法 | 控制器/处理文件 |
 |------|------|-----------------|
-| `/` | GET | 内联处理 |
+| `/status` | GET | 内联处理（返回后端状态） |
 | `/login` | POST | `AuthController@login` |
 | `/register` | POST | `AuthController@register` |
 | `/logout` | GET | `AuthController@logout` |

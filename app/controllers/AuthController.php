@@ -114,7 +114,17 @@ class AuthController {
             echo json_encode(['success' => false, 'message' => 'Email already registered']);
             exit;
         }
-        
+
+        // Check if username already exists
+        $stmt = $pdo->prepare('SELECT uid FROM users WHERE username = ? LIMIT 1');
+        $stmt->execute([$username]);
+
+        if ($stmt->fetch()) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'message' => 'Username already taken']);
+            exit;
+        }
+
         // Create user
         $hash = password_hash($password, PASSWORD_BCRYPT);
         $ip   = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -122,7 +132,7 @@ class AuthController {
         $score = 1000;
         $verification_token = bin2hex(random_bytes(16));
         $verified = 0;
-        $uuid = str_replace('-', '', uuid_create(UUID_TYPE_RANDOM));
+        $uuid = generateUnsignedUUID();
 
         $stmt = $pdo->prepare('SELECT MAX(uid) as max_uid FROM users');
         $stmt->execute();
@@ -131,8 +141,8 @@ class AuthController {
 
         $insert = $pdo->prepare(
             'INSERT INTO users
-            (uid, uuid, email, username, score, password, ip, last_sign_at, register_at, verified, verification_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (uid, uuid, email, username, password, ip, last_sign_at, register_at, verified, verification_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
 
         $insert->execute([
@@ -140,7 +150,6 @@ class AuthController {
             $uuid,
             $email,
             $username,
-            $score,
             $hash,
             $ip,
             $now,
@@ -150,7 +159,7 @@ class AuthController {
         ]);
 
         // Create default profile for the user
-        $profileId = str_replace('-', '', uuid_create(UUID_TYPE_RANDOM));
+        $profileId = generateUnsignedUUID();
         $insertProfile = $pdo->prepare(
             'INSERT INTO profiles (id, user_id, name, model) VALUES (?, ?, ?, ?)'
         );

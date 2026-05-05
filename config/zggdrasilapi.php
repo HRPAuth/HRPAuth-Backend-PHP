@@ -5,9 +5,11 @@
 $preference = require __DIR__ . '/preference.php';
 
 // Extract domain from URL
-function extract_domain($url) {
-    $parsed = parse_url($url);
-    return $parsed['host'];
+if (!function_exists('extract_domain')) {
+    function extract_domain($url) {
+        $parsed = parse_url($url);
+        return $parsed['host'];
+    }
 }
 
 $frontend_url = $preference['frontend']['url'];
