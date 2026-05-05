@@ -929,6 +929,35 @@
 | file | file | 是 | PNG 图片文件（表单数据） |
 | model | string | 否 | 皮肤模型（default/slim，仅用于 skin 类型） |
 
+#### 文件系统与数据库操作
+- **文件系统操作**:
+  - 创建材质目录：`/public/textures/{uuid}/`
+  - 保存材质文件：`/public/textures/{uuid}/{textureType}.png`
+- **数据库操作**:
+  - 查询档案归属：`SELECT id FROM profiles WHERE id = ? AND user_id = ?`
+  - 更新材质属性：`UPDATE profile_properties SET value = ? WHERE id = ?`
+  - 新增材质属性：`INSERT INTO profile_properties (profile_id, name, value) VALUES (?, 'textures', ?)`
+
+#### 处理操作
+1. 验证 UUID 和材质类型（必须为 skin 或 cape）
+2. 验证 Authorization 请求头，提取 Bearer token
+3. 验证 token 有效性（查询 tokens 表）
+4. 验证档案是否属于当前用户
+5. 验证上传文件（PNG 格式，大小 ≤ 100KB）
+6. 创建 `{uuid}` 目录（如不存在）
+7. 将上传文件保存到 `/public/textures/{uuid}/{textureType}.png`
+8. 生成材质 URL：`{callback_url}/textures/{uuid}/{textureType}.png`
+9. 构建材质载荷并 Base64 编码
+10. 更新或插入 profile_properties 表中的 textures 属性
+
+#### 材质文件存储位置
+- **路径**: `/public/textures/{uuid}/{textureType}.png`
+- **示例**: `/public/textures/550e8400e29b41d4a71644665530a028/skin.png`
+
+#### 材质 URL 格式
+- **格式**: `{callback_url}/textures/{uuid}/{textureType}.png`
+- **示例**: `https://hrpauth.samuelcheston.com/textures/550e8400e29b41d4a71644665530a028/skin.png`
+
 #### 返回值
 成功响应：204 No Content
 失败响应：
@@ -953,6 +982,24 @@
 | textureType | string | 是 | 材质类型（skin/cape，路径参数） |
 | Authorization | string | 是 | Bearer 访问 token（请求头） |
 
+#### 文件系统与数据库操作
+- **文件系统操作**:
+  - 删除材质文件：`/public/textures/{uuid}/{textureType}.png`
+- **数据库操作**:
+  - 查询材质属性：`SELECT id, value FROM profile_properties WHERE profile_id = ? AND name = 'textures'`
+  - 更新材质属性：`UPDATE profile_properties SET value = ? WHERE id = ?`
+  - 删除材质属性：`DELETE FROM profile_properties WHERE id = ?`
+
+#### 处理操作
+1. 验证 UUID 和材质类型（必须为 skin 或 cape）
+2. 验证 Authorization 请求头，提取 Bearer token
+3. 验证 token 有效性（查询 tokens 表）
+4. 验证档案是否属于当前用户
+5. 查询 profile_properties 中的 textures 属性
+6. 解码并更新 textures 载荷，移除对应的材质
+7. 如无剩余材质则删除属性，否则更新属性
+8. 删除物理文件 `/public/textures/{uuid}/{textureType}.png`
+
 #### 返回值
 成功响应：204 No Content
 失败响应：
@@ -961,6 +1008,14 @@
   "error": "ForbiddenOperationException",
   "errorMessage": "Invalid UUID."
 }
+```
+
+### 材质目录结构
+```
+public/textures/
+└── {uuid}/
+    ├── skin.png    # 玩家皮肤文件
+    └── cape.png    # 玩家披风文件
 ```
 
 ## 总结

@@ -65,5 +65,11 @@ if ($existingProperty) {
     }
 }
 
+// Delete the actual texture file from disk
+$texturePath = APP_ROOT . '/public/textures/' . $uuid . '/' . $textureType . '.png';
+if (file_exists($texturePath)) {
+    unlink($texturePath);
+}
+
 // Return 204 No Content
 sendNoContentResponse();

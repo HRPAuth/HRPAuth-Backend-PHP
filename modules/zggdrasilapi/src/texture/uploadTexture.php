@@ -69,8 +69,24 @@ if ($textureType === 'skin' && isset($_POST['model']) && $_POST['model'] === 'sl
     $model = 'slim';
 }
 
-// Generate texture URL (in a real implementation, you would upload to a storage service)
-$textureUrl = 'http://auth.samuelchest.com/textures/' . $uuid . '/' . $textureType . '.png';
+// Create textures directory for this profile
+$textureDir = APP_ROOT . '/public/textures/' . $uuid;
+if (!file_exists($textureDir)) {
+    mkdir($textureDir, 0755, true);
+}
+
+// Define texture file path
+$texturePath = $textureDir . '/' . $textureType . '.png';
+
+// Move uploaded file to textures directory
+if (!move_uploaded_file($file['tmp_name'], $texturePath)) {
+    sendErrorResponse('ForbiddenOperationException', 'Failed to save texture file.');
+}
+
+// Generate texture URL
+$config = require __DIR__ . '/../../../../config/preference.php';
+$baseUrl = $config['callback']['url'];
+$textureUrl = $baseUrl . '/textures/' . $uuid . '/' . $textureType . '.png';
 
 // Create textures payload
 $texturesPayload = [
