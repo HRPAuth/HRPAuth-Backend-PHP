@@ -18,12 +18,39 @@ class TOTPController {
         echo $this->generate_totp($secret);
     }
     
+    private function base32_decode($encoded) {
+        $base32_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        $encoded = strtoupper(trim($encoded));
+        $encoded = str_replace(['=', ' ', '-'], '', $encoded);
+        
+        $decoded = '';
+        $buffer = 0;
+        $bits_left = 0;
+        
+        for ($i = 0; $i < strlen($encoded); $i++) {
+            $char = $encoded[$i];
+            $value = strpos($base32_chars, $char);
+            if ($value === false) continue;
+            
+            $buffer = ($buffer << 5) | $value;
+            $bits_left += 5;
+            
+            if ($bits_left >= 8) {
+                $bits_left -= 8;
+                $decoded .= chr(($buffer >> $bits_left) & 0xFF);
+            }
+        }
+        
+        return $decoded;
+    }
+
     private function generate_totp($secret, $digits = 6, $period = 30)
     {
         $counter = floor(time() / $period);
-        $binary_counter = pack('J*', $counter);
+        $binary_counter = pack('N*', 0) . pack('N*', $counter);
+        $secret_bytes = $this->base32_decode($secret);
 
-        $hash = hash_hmac('sha1', $binary_counter, $secret, true);
+        $hash = hash_hmac('sha1', $binary_counter, $secret_bytes, true);
 
         $offset = ord($hash[strlen($hash) - 1]) & 0x0F;
         $truncated_hash = substr($hash, $offset, 4);
@@ -180,7 +207,8 @@ class TOTPController {
             $period = 30;
             $counterPrev = floor(time() / $period) - 1;
             $binary_counter_prev = pack('N*', 0) . pack('N*', $counterPrev);
-            $hash_prev = hash_hmac('sha1', $binary_counter_prev, $secret, true);
+            $secret_bytes = $this->base32_decode($secret);
+            $hash_prev = hash_hmac('sha1', $binary_counter_prev, $secret_bytes, true);
             $offset = ord(substr($hash_prev, -1)) & 0x0F;
             $truncated_hash_prev = substr($hash_prev, $offset, 4);
             $value_prev = unpack('N', $truncated_hash_prev)[1];

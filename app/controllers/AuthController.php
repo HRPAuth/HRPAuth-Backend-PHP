@@ -31,7 +31,7 @@ class AuthController {
         }
         
         $pdo = getPDO();
-        $stmt = $pdo->prepare('SELECT uid, password FROM users WHERE email = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT uid, password, totp FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
         
@@ -51,11 +51,14 @@ class AuthController {
         $update = $pdo->prepare('UPDATE users SET remember_token = ? WHERE uid = ?');
         $update->execute([$token, $uid]);
         
+        $totp = !empty($user['totp']) ? 1 : 0;
+        
         echo json_encode([
             'success' => true,
             'message' => 'Login successful',
             'token' => $token,
-            'uid' => $uid
+            'uid' => $uid,
+            'totp' => $totp
         ]);
     }
     

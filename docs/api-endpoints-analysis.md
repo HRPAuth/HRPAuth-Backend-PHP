@@ -84,18 +84,19 @@
 
 ### 文件系统与数据库操作
 - **数据库操作**:
-  - 查询用户信息：`SELECT uid, password FROM users WHERE email = ? LIMIT 1`
+  - 查询用户信息：`SELECT uid, password, totp FROM users WHERE email = ? LIMIT 1`
   - 更新用户 token：`UPDATE users SET remember_token = ? WHERE uid = ?`
 
 ### 处理操作
 1. 验证请求方法是否为 POST
 2. 解析 JSON 请求数据
 3. 验证邮箱格式
-4. 查询用户信息
+4. 查询用户信息（包含 totp 字段）
 5. 验证密码
 6. 生成随机 token
 7. 更新用户 token 到数据库
-8. 返回登录结果
+8. 判断用户是否配置了 TOTP（检查 totp 字段是否有内容）
+9. 返回登录结果（包含 totp 状态）
 
 ### 返回值类型
 - **Content-Type**: `application/json`
@@ -103,10 +104,19 @@
 ### 期望的返回值用途
 | 状态码 | 成功响应 | 失败响应 | 用途 |
 |--------|----------|----------|------|
-| 200 | `{"success": true, "message": "Login successful", "token": "string", "uid": "number"}` | - | 登录成功，返回用户 token 和 uid |
+| 200 | `{"success": true, "message": "Login successful", "token": "string", "uid": "number", "totp": "number"}` | - | 登录成功，返回用户 token、uid 和 TOTP 状态 |
 | 400 | - | `{"success": false, "message": "Invalid email"}` | 邮箱格式错误 |
 | 401 | - | `{"success": false, "message": "Email or password incorrect"}` | 邮箱或密码错误 |
 | 405 | - | `{"success": false, "message": "Method Not Allowed"}` | 请求方法错误 |
+
+### 返回字段说明
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| success | boolean | 是否登录成功 |
+| message | string | 操作结果消息 |
+| token | string | 用户登录令牌，用于后续请求认证 |
+| uid | number | 用户唯一标识符 |
+| totp | number | TOTP 状态：`1` 表示用户已配置 TOTP，`0` 表示未配置 |
 
 ## 2. 注册 API
 
