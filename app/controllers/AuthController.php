@@ -145,7 +145,7 @@ class AuthController {
         $insert = $pdo->prepare(
             'INSERT INTO users
             (uid, uuid, email, username, password, ip, last_sign_at, register_at, verified, verification_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
 
         $insert->execute([
