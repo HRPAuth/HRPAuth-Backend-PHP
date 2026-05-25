@@ -1,11 +1,11 @@
 <?php
 
-// Authenticate endpoint
-// POST /authserver/authenticate
+require_once __DIR__ . '/../../../../app/services/AuthService.php';
+
+use App\services\AuthService;
 
 $request = getRequestBody();
 
-// Validate request
 if (!isset($request['username']) || !isset($request['password']) || !isset($request['agent'])) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid credentials.');
 }
@@ -16,74 +16,39 @@ $agent = $request['agent'];
 $clientToken = isset($request['clientToken']) ? $request['clientToken'] : generateClientToken();
 $requestUser = isset($request['requestUser']) ? $request['requestUser'] : false;
 
-// Validate agent
 if (!isset($agent['name']) || !isset($agent['version'])) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid agent information.');
 }
 
-$db = Database::getInstance();
+$authService = new AuthService();
 
-// Check if user exists
-$config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
-$nonEmailLogin = $config['feature_flags']['non_email_login'];
+$user = $authService->verifyCredentials($username, $password);
 
-if ($nonEmailLogin) {
-    $stmt = $db->query('SELECT u.uuid, u.email, u.username, u.password, u.locale FROM users u JOIN profiles p ON u.uuid = p.user_id WHERE u.email = ? OR p.name = ?', [$username, $username]);
-    $user = $stmt->fetch();
-} else {
-    $stmt = $db->query('SELECT uuid, email, username, password, locale FROM users WHERE email = ?', [$username]);
-    $user = $stmt->fetch();
-}
-
-if (!$user || !verifyPassword($password, $user['password'])) {
+if (!$user) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid credentials.');
 }
 
-// Get user properties if requested
 $userProperties = [];
 if ($requestUser && $user['locale']) {
     $userProperties[] = ['name' => 'locale', 'value' => $user['locale']];
 }
 
-// Get user profiles
-$stmt = $db->query('SELECT id, name, model FROM profiles WHERE user_id = ?', [$user['uuid']]);
-$profiles = [];
-$selectedProfile = null;
-
-while ($profile = $stmt->fetch()) {
-    $profileData = ['id' => $profile['id'], 'name' => $profile['name']];
-    if ($profile['model']) {
-        $profileData['model'] = $profile['model'];
-    }
-    $profiles[] = $profileData;
-    
-    // Set first profile as selected if none selected
-    if (!$selectedProfile) {
-        $selectedProfile = $profileData;
-    }
-}
+$profiles = $authService->getUserProfiles($user['uuid']);
 
 if (empty($profiles)) {
     sendErrorResponse('ForbiddenOperationException', 'User has no profiles.');
 }
 
-// Generate access token
-$accessToken = generateAccessToken();
-$issuedAt = getCurrentTimestamp();
+$selectedProfile = $profiles[0];
 
-// Insert token into database
+$accessToken = generateAccessToken();
+
 $config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
-try {
-    $db->query(
-        'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [$accessToken, $clientToken, $user['uuid'], $selectedProfile['id'], $issuedAt, $config['security']['token_expiry_days'], 'valid']
-    );
-} catch (PDOException $e) {
-    error_log('Token insertion failed: ' . $e->getMessage());
+
+if (!$authService->createToken($accessToken, $clientToken, $user['uuid'], $selectedProfile['id'], $config['security']['token_expiry_days'])) {
     sendErrorResponse('ForbiddenOperationException', 'Failed to create session. Please try again.');
 }
 
-// Prepare response
 $response = [
     'accessToken' => $accessToken,
     'clientToken' => $clientToken,
@@ -91,7 +56,6 @@ $response = [
     'selectedProfile' => $selectedProfile
 ];
 
-// Add user info if requested
 if ($requestUser) {
     $response['user'] = [
         'id' => $user['uuid'],

@@ -2,6 +2,7 @@
 /**
  * Auto-create profiles for existing users who don't have one
  * Run this script once to fix existing users
+ * For debug purpose only!
  */
 
 require_once __DIR__ . '/config/db.php';

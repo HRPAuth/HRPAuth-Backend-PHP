@@ -1,11 +1,11 @@
 <?php
 
-// Refresh endpoint
-// POST /authserver/refresh
+require_once __DIR__ . '/../../../../app/services/AuthService.php';
+
+use App\services\AuthService;
 
 $request = getRequestBody();
 
-// Validate request
 if (!isset($request['accessToken'])) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid token.');
 }
@@ -15,45 +15,32 @@ $clientToken = isset($request['clientToken']) ? $request['clientToken'] : null;
 $requestUser = isset($request['requestUser']) ? $request['requestUser'] : false;
 $selectedProfile = isset($request['selectedProfile']) ? $request['selectedProfile'] : null;
 
-$db = Database::getInstance();
+$authService = new AuthService();
 
-// Check if token exists and is valid
-$stmt = $db->query('SELECT t.*, u.uuid as user_id, u.email, u.preferred_language FROM tokens t JOIN users u ON t.user_id = u.uuid WHERE t.access_token = ? AND t.state = ?', [$accessToken, 'valid']);
-$token = $stmt->fetch();
+$token = $authService->validateToken($accessToken, $clientToken);
 
 if (!$token) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid token.');
 }
 
-// Validate client token if provided
-if ($clientToken && $clientToken !== $token['client_token']) {
-    sendErrorResponse('ForbiddenOperationException', 'Invalid client token.');
-}
-
-// Use existing client token if none provided
 if (!$clientToken) {
     $clientToken = $token['client_token'];
 }
 
-// Validate selected profile if provided
 $profileId = $token['selected_profile_id'];
 if ($selectedProfile) {
     if (!isset($selectedProfile['id'])) {
         sendErrorResponse('ForbiddenOperationException', 'Invalid selected profile.');
     }
     
-    // Check if profile belongs to user
-    $stmt = $db->query('SELECT id FROM profiles WHERE id = ? AND user_id = ?', [$selectedProfile['id'], $token['user_id']]);
-    if (!$stmt->fetch()) {
+    if (!$authService->isProfileOwnedByUser($selectedProfile['id'], $token['user_id'])) {
         sendErrorResponse('ForbiddenOperationException', 'Invalid selected profile.');
     }
     
     $profileId = $selectedProfile['id'];
 }
 
-// Get selected profile details
-$stmt = $db->query('SELECT p.id, u.username, p.model FROM profiles p JOIN users u ON p.user_id = u.uuid WHERE p.id = ?', [$profileId]);
-$profile = $stmt->fetch();
+$profile = $authService->getProfileById($profileId);
 
 if (!$profile) {
     sendErrorResponse('ForbiddenOperationException', 'Selected profile not found.');
@@ -64,39 +51,27 @@ if ($profile['model']) {
     $profileData['model'] = $profile['model'];
 }
 
-// Get user properties if requested
 $userProperties = [];
 if ($requestUser && $token['locale']) {
     $userProperties[] = ['name' => 'locale', 'value' => $token['locale']];
 }
 
-// Generate new access token
 $newAccessToken = generateAccessToken();
-$issuedAt = getCurrentTimestamp();
 
-// Invalidate old token
-$db->query('UPDATE tokens SET state = ? WHERE access_token = ?', ['invalid', $accessToken]);
+$authService->invalidateToken($accessToken);
 
-// Insert new token
 $config = require __DIR__ . '/../../../../config/zggdrasilapi.php';
-try {
-    $db->query(
-        'INSERT INTO tokens (access_token, client_token, user_id, selected_profile_id, issued_at, expires_in_days, state) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [$newAccessToken, $clientToken, $token['user_id'], $profileId, $issuedAt, $config['security']['token_expiry_days'], 'valid']
-    );
-} catch (PDOException $e) {
-    error_log('Token insertion failed during refresh: ' . $e->getMessage());
+
+if (!$authService->createToken($newAccessToken, $clientToken, $token['user_id'], $profileId, $config['security']['token_expiry_days'])) {
     sendErrorResponse('ForbiddenOperationException', 'Failed to refresh session. Please try again.');
 }
 
-// Prepare response
 $response = [
     'accessToken' => $newAccessToken,
     'clientToken' => $clientToken,
     'selectedProfile' => $profileData
 ];
 
-// Add user info if requested
 if ($requestUser) {
     $response['user'] = [
         'id' => $token['user_id'],

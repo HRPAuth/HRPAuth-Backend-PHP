@@ -96,6 +96,11 @@ $preference = include APP_ROOT . '/config/preference.php';
     
     // Key generation
     'POST /generate-key' => 'controllers/KeyGenController@generate',
+    
+    // Auto-create profiles (debug)
+    'GET /auto-create-profiles' => function() {
+        require_once APP_ROOT . '/auto-create-profiles.php';
+    },
 ];
 
 // Match route

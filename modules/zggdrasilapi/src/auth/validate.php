@@ -1,11 +1,11 @@
 <?php
 
-// Validate endpoint
-// POST /authserver/validate
+require_once __DIR__ . '/../../../../app/services/AuthService.php';
+
+use App\services\AuthService;
 
 $request = getRequestBody();
 
-// Validate request
 if (!isset($request['accessToken'])) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid token.');
 }
@@ -13,20 +13,12 @@ if (!isset($request['accessToken'])) {
 $accessToken = $request['accessToken'];
 $clientToken = isset($request['clientToken']) ? $request['clientToken'] : null;
 
-$db = Database::getInstance();
+$authService = new AuthService();
 
-// Check if token exists and is valid
-$stmt = $db->query('SELECT * FROM tokens WHERE access_token = ? AND state = ?', [$accessToken, 'valid']);
-$token = $stmt->fetch();
+$token = $authService->validateToken($accessToken, $clientToken);
 
 if (!$token) {
     sendErrorResponse('ForbiddenOperationException', 'Invalid token.');
 }
 
-// Validate client token if provided
-if ($clientToken && $clientToken !== $token['client_token']) {
-    sendErrorResponse('ForbiddenOperationException', 'Invalid client token.');
-}
-
-// Token is valid, return 204 No Content
 sendNoContentResponse();
